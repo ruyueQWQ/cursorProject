@@ -1,6 +1,7 @@
 <script setup>
 import { storeToRefs } from 'pinia'
 import { useChatStore } from '../stores/chatStore'
+import MermaidDiagram from './MermaidDiagram.vue'
 
 const chatStore = useChatStore()
 const { visualization, visualizationLoading, visualizationError } = storeToRefs(chatStore)
@@ -46,6 +47,9 @@ const { visualization, visualizationLoading, visualizationError } = storeToRefs(
           <p>{{ algo.stepBreakdown }}</p>
         </div>
         <pre v-if="algo.codeSnippet" class="code-block"><code>{{ algo.codeSnippet }}</code></pre>
+        <div v-if="algo.mermaidCode" class="mermaid-wrapper">
+          <MermaidDiagram :chart="algo.mermaidCode" />
+        </div>
         <div v-if="algo.visualizationHint" class="hint">
           <strong>可视化建议：</strong>{{ algo.visualizationHint }}
         </div>
@@ -141,6 +145,13 @@ header {
   background: #ecfccb;
   border-radius: 0.75rem;
   color: #3f6212;
+}
+.mermaid-wrapper {
+  margin: 1rem 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  padding: 0.5rem;
+  background: #fff;
 }
 </style>
 

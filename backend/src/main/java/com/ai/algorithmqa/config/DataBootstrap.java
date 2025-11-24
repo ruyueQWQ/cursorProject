@@ -38,17 +38,19 @@ public class DataBootstrap {
             int importedCount = 0;
             for (KnowledgeIngestRequest request : topics) {
                 // 检查是否已存在同名主题
-                Long count = topicMapper.selectCount(
-                        new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.ai.algorithmqa.domain.entity.KnowledgeTopic>()
-                                .eq(com.ai.algorithmqa.domain.entity.KnowledgeTopic::getTitle, request.title()));
-                if (count == null || count == 0) {
-                    knowledgeService.ingest(request);
-                    importedCount++;
+                com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.ai.algorithmqa.domain.entity.KnowledgeTopic> query = new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.ai.algorithmqa.domain.entity.KnowledgeTopic>()
+                        .eq(com.ai.algorithmqa.domain.entity.KnowledgeTopic::getTitle, request.title());
+
+                Long count = topicMapper.selectCount(query);
+                if (count != null && count > 0) {
+                    log.info("发现已存在主题 [{}]，正在删除旧数据以重新导入...", request.title());
+                    topicMapper.delete(query);
                 }
+
+                knowledgeService.ingest(request);
+                importedCount++;
             }
-            if (importedCount > 0) {
-                log.info("已增量导入 {} 条新知识点", importedCount);
-            }
+            log.info("已自动导入 {} 条示例知识点", importedCount);
         }
     }
 }

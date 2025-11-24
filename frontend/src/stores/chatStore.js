@@ -65,7 +65,9 @@ export const useChatStore = defineStore('chat', {
       }
     },
     async loadVisualization(topicId) {
-      if (!topicId || topicId === this.activeTopicId) {
+      console.log('loadVisualization called with:', topicId, 'current active:', this.activeTopicId)
+      if (!topicId) {
+        console.log('Skipping load: topicId is null')
         return
       }
       this.visualizationLoading = true

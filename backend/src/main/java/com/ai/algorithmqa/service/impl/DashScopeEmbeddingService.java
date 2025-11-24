@@ -44,7 +44,12 @@ public class DashScopeEmbeddingService implements EmbeddingService {
             input.put("model", properties.embeddingModel());
             input.put("input", text);
 
-            ResponseEntity<String> response = restTemplate.postForEntity(properties.embeddingEndpoint(), input, String.class);
+            // 显式序列化为 JSON 字符串，确保 Content-Type 生效且格式正确
+            String jsonBody = mapper.writeValueAsString(input);
+            org.springframework.http.HttpEntity<String> entity = new org.springframework.http.HttpEntity<>(jsonBody);
+
+            ResponseEntity<String> response = restTemplate.postForEntity(properties.embeddingEndpoint(), entity,
+                    String.class);
             JsonNode node = mapper.readTree(response.getBody());
             JsonNode vector = node.path("output").path("embedding");
             if (vector.isMissingNode()) {
@@ -72,4 +77,3 @@ public class DashScopeEmbeddingService implements EmbeddingService {
         return vector;
     }
 }
-
