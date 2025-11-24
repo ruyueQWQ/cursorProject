@@ -4,6 +4,7 @@ import { storeToRefs } from 'pinia'
 import { useChatStore } from '../stores/chatStore'
 import MessageBubble from './MessageBubble.vue'
 import KnowledgeReference from './KnowledgeReference.vue'
+import VisualizationPanel from './VisualizationPanel.vue'
 
 const chatStore = useChatStore()
 const { messages, references, loading, latency } = storeToRefs(chatStore)
@@ -32,6 +33,10 @@ const handleSubmit = () => {
   if (!canSend.value) return
   chatStore.askQuestion(question.value, selectedFilters.value)
   question.value = ''
+}
+
+const handleReferenceSelect = (reference) => {
+  chatStore.loadVisualization(reference.topicId)
 }
 </script>
 
@@ -73,19 +78,23 @@ const handleSubmit = () => {
         </div>
       </div>
     </section>
-    <aside class="reference-panel">
-      <header>
-        <h3>知识引用</h3>
-        <p>确保回答基于课程知识库</p>
-      </header>
-      <div v-if="references.length === 0" class="reference-empty">
-        暂无引用，提问时可以启用“重点知识”标签获得检索增强提示。
-      </div>
-      <KnowledgeReference
-        v-for="(ref, idx) in references"
-        :key="idx"
-        :reference="ref"
-      />
+    <aside class="insight-column">
+      <section class="reference-panel">
+        <header>
+          <h3>知识引用</h3>
+          <p>确保回答基于课程知识库</p>
+        </header>
+        <div v-if="references.length === 0" class="reference-empty">
+          暂无引用，提问时可以启用“重点知识”标签获得检索增强提示。
+        </div>
+        <KnowledgeReference
+          v-for="(ref, idx) in references"
+          :key="idx"
+          :reference="ref"
+          @select="handleReferenceSelect"
+        />
+      </section>
+      <VisualizationPanel />
     </aside>
   </div>
 </template>
@@ -98,13 +107,25 @@ const handleSubmit = () => {
   height: calc(100vh - 220px);
 }
 .chat-panel,
-.reference-panel {
+.insight-column {
   background: #fff;
   border-radius: 1rem;
   box-shadow: 0 25px 60px rgba(15, 23, 42, 0.05);
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
+}
+.insight-column {
+  gap: 1.25rem;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+.reference-panel {
+  background: #fff;
+  border-radius: 1rem;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.04);
 }
 .message-list {
   flex: 1;
@@ -200,6 +221,9 @@ textarea {
   .chat-wrapper {
     grid-template-columns: 1fr;
     height: auto;
+  }
+  .insight-column {
+    padding: 0 0 1.25rem;
   }
 }
 </style>

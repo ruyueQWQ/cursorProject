@@ -1,6 +1,7 @@
 package com.ai.algorithmqa.controller;
 
 import com.ai.algorithmqa.common.ApiResponse;
+import com.ai.algorithmqa.domain.dto.AlgorithmVisualizationResponse;
 import com.ai.algorithmqa.domain.dto.KnowledgeIngestRequest;
 import com.ai.algorithmqa.domain.dto.ReferenceChunk;
 import com.ai.algorithmqa.service.KnowledgeService;
@@ -50,7 +51,7 @@ public class KnowledgeController {
     }
 
     @GetMapping("/topics/{topicId}/visualizations")
-    public ApiResponse<?> visualization(@PathVariable Long topicId) {
+    public ApiResponse<AlgorithmVisualizationResponse> visualization(@PathVariable Long topicId) {
         log.info("获取可视化数据 topicId={}", topicId);
         return ApiResponse.ok(knowledgeService.findVisualizationByTopic(topicId));
     }

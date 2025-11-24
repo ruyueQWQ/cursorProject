@@ -1,14 +1,19 @@
 <script setup>
-defineProps({
+const emit = defineEmits(['select'])
+const props = defineProps({
   reference: {
     type: Object,
     required: true
   }
 })
+
+const handleClick = () => {
+  emit('select', props.reference)
+}
 </script>
 
 <template>
-  <article class="reference-card">
+  <article class="reference-card" @click="handleClick">
     <header>
       <span class="badge">Score {{ reference.score.toFixed(2) }}</span>
       <h4>{{ reference.topicTitle }}</h4>
@@ -24,6 +29,12 @@ defineProps({
   padding: 0.9rem 1rem;
   margin-bottom: 0.85rem;
   background: #fbfcff;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+.reference-card:hover {
+  border-color: #3f51b5;
+  transform: translateY(-2px);
 }
 .reference-card h4 {
   margin: 0.2rem 0;

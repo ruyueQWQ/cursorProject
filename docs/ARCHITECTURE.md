@@ -39,7 +39,7 @@ Vue 3 Chat UI  ──>  Spring Boot 3 API  ──>  MySQL / Embedding
 - **技术栈**：Vue 3 + Vite + Pinia + Axios
 - **界面**
   - 左侧：聊天记录、输入框、重点知识过滤器
-  - 右侧：知识引用卡片、响应耗时
+  - 右侧：知识引用卡片、算法可视化面板（核心思想/步骤/复杂度/代码提示）
 - **状态管理**
   - `chatStore` 维护消息列表、引用、加载态与耗时
   - API 代理 `/api` → `localhost:8080`，亦可通过 `VITE_API_BASE` 自定义

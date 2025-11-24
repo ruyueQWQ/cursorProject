@@ -124,14 +124,15 @@ public class KnowledgeServiceImpl implements KnowledgeService {
         int limit = topK > 0 ? topK : DEFAULT_TOP_K;
 
         LambdaQueryWrapper<KnowledgeChunk> wrapper = Wrappers.lambdaQuery();
+
         if (filters != null && !filters.isEmpty()) {
-            for (String filter : filters) {
-                wrapper.and(w -> w.like(KnowledgeChunk::getKeywords, filter)
-                        .or()
-                        .like(KnowledgeChunk::getContent, filter));
-            }
+            filters.forEach(filter ->
+                    wrapper.and(w -> w.like(KnowledgeChunk::getKeywords, filter))
+            );
         }
-        wrapper.like(KnowledgeChunk::getContent, query);
+
+// 把主查询条件也改成匹配 keywords（或 keyword+content 二选一）
+        wrapper.like(KnowledgeChunk::getKeywords, query);
         wrapper.last("limit " + (limit * 2));
         List<KnowledgeChunk> chunks = chunkMapper.selectList(wrapper);
         if (chunks.isEmpty()) {

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { askQuestion } from '../api/chat'
+import { askQuestion, fetchVisualization } from '../api/chat'
 
 const formatTimestamp = () =>
   new Intl.DateTimeFormat('zh-CN', {
@@ -20,7 +20,11 @@ export const useChatStore = defineStore('chat', {
     ],
     references: [],
     loading: false,
-    latency: null
+    latency: null,
+    visualization: null,
+    visualizationLoading: false,
+    visualizationError: null,
+    activeTopicId: null
   }),
   actions: {
     async askQuestion(question, filters = []) {
@@ -39,6 +43,12 @@ export const useChatStore = defineStore('chat', {
         const payload = data.data
         this.references = payload.references ?? []
         this.latency = payload.latencyMs
+        if (this.references.length > 0) {
+          this.loadVisualization(this.references[0].topicId)
+        } else {
+          this.visualization = null
+          this.activeTopicId = null
+        }
         this.messages.push({
           role: 'assistant',
           content: payload.answer,
@@ -52,6 +62,22 @@ export const useChatStore = defineStore('chat', {
         })
       } finally {
         this.loading = false
+      }
+    },
+    async loadVisualization(topicId) {
+      if (!topicId || topicId === this.activeTopicId) {
+        return
+      }
+      this.visualizationLoading = true
+      this.visualizationError = null
+      try {
+        const { data } = await fetchVisualization(topicId)
+        this.visualization = data.data
+        this.activeTopicId = topicId
+      } catch (error) {
+        this.visualizationError = error.message
+      } finally {
+        this.visualizationLoading = false
       }
     }
   }
