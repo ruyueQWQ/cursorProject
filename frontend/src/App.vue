@@ -1,9 +1,16 @@
 <script setup>
+import { useRoute } from 'vue-router'
 import ChatPanel from './components/ChatPanel.vue'
+
+const route = useRoute()
 </script>
 
 <template>
-  <div class="app-shell">
+  <!-- 管理后台路由 -->
+  <router-view v-if="route.path.startsWith('/admin')" />
+  
+  <!-- 用户端界面 -->
+  <div v-else class="app-shell">
     <header class="app-header">
       <div>
         <h1>算法设计与分析 · 智能助教</h1>

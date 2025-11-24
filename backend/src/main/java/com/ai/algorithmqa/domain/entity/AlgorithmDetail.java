@@ -29,4 +29,6 @@ public class AlgorithmDetail {
     private String visualizationHint;
 
     private String mermaidCode;
+
+    private String animationUrl;
 }

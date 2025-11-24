@@ -197,7 +197,8 @@ public class KnowledgeServiceImpl implements KnowledgeService {
                         detail.getSpaceComplexity(),
                         detail.getCodeSnippet(),
                         detail.getVisualizationHint(),
-                        detail.getMermaidCode()))
+                        detail.getMermaidCode(),
+                        detail.getAnimationUrl()))
                 .toList();
         log.info("返回可视化数据 topicId={}, algorithms={}", topicId, blocks.size());
         return new AlgorithmVisualizationResponse(

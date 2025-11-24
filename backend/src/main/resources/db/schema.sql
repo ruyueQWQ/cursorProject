@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS algorithm_detail (
     code_snippet MEDIUMTEXT,
     visualization_hint TEXT,
     mermaid_code TEXT,
+    animation_url VARCHAR(512),
     CONSTRAINT fk_detail_topic FOREIGN KEY (topic_id) REFERENCES knowledge_topic (id) ON DELETE CASCADE
 );
 
@@ -44,4 +45,14 @@ CREATE TABLE IF NOT EXISTS qa_log (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS admin_user (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- 插入默认管理员账号 (密码: admin123)
+INSERT INTO admin_user (username, password) VALUES ('admin', 'admin123') ON DUPLICATE KEY UPDATE username=username;
 

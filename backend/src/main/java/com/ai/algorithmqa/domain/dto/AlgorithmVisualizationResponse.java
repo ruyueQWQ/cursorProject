@@ -22,7 +22,8 @@ public record AlgorithmVisualizationResponse(
                         String spaceComplexity, // 空间复杂度
                         String codeSnippet, // 代码片段
                         String visualizationHint, // 可视化提示
-                        String mermaidCode // Mermaid 代码
+                        String mermaidCode, // Mermaid 代码
+                        String animationUrl // 动画 URL
         ) {
         }
 }

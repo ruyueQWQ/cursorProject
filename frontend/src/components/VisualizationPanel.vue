@@ -5,6 +5,10 @@ import MermaidDiagram from './MermaidDiagram.vue'
 
 const chatStore = useChatStore()
 const { visualization, visualizationLoading, visualizationError } = storeToRefs(chatStore)
+
+const isVideo = (url) => {
+  return url && (url.endsWith('.mp4') || url.endsWith('.webm') || url.endsWith('.mov'))
+}
 </script>
 
 <template>
@@ -47,9 +51,32 @@ const { visualization, visualizationLoading, visualizationError } = storeToRefs(
           <p>{{ algo.stepBreakdown }}</p>
         </div>
         <pre v-if="algo.codeSnippet" class="code-block"><code>{{ algo.codeSnippet }}</code></pre>
+        
+        <!-- Mermaid 流程图 -->
         <div v-if="algo.mermaidCode" class="mermaid-wrapper">
+          <h5>流程图</h5>
           <MermaidDiagram :chart="algo.mermaidCode" />
         </div>
+        
+        <!-- 动画演示 -->
+        <div v-if="algo.animationUrl" class="animation-section">
+          <h5>算法动画演示</h5>
+          <video 
+            v-if="isVideo(algo.animationUrl)"
+            :src="algo.animationUrl" 
+            controls 
+            class="animation-video"
+          >
+            您的浏览器不支持视频播放
+          </video>
+          <img 
+            v-else
+            :src="algo.animationUrl" 
+            alt="算法动画"
+            class="animation-gif"
+          />
+        </div>
+        
         <div v-if="algo.visualizationHint" class="hint">
           <strong>可视化建议：</strong>{{ algo.visualizationHint }}
         </div>
@@ -122,7 +149,7 @@ header {
   color: #2b334d;
 }
 .steps h5 {
-  margin: 0;
+  margin: 0.8rem 0 0.3rem;
   font-size: 0.9rem;
   color: #475569;
 }
@@ -138,6 +165,7 @@ header {
   border-radius: 0.75rem;
   overflow-x: auto;
   font-size: 0.85rem;
+  margin: 0.8rem 0;
 }
 .hint {
   margin-top: 0.6rem;
@@ -150,8 +178,38 @@ header {
   margin: 1rem 0;
   border: 1px solid #e2e8f0;
   border-radius: 0.75rem;
-  padding: 0.5rem;
+  padding: 1rem;
   background: #fff;
 }
-</style>
+.mermaid-wrapper h5 {
+  margin: 0 0 0.8rem;
+  font-size: 0.9rem;
+  color: #475569;
+}
 
+/* 动画演示样式 */
+.animation-section {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.animation-section h5 {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+  color: #475569;
+}
+
+.animation-video,
+.animation-gif {
+  width: 100%;
+  max-height: 400px;
+  border-radius: 0.5rem;
+  object-fit: contain;
+  background: #000;
+}
+
+.animation-gif {
+  background: #f9fafb;
+}
+</style>
