@@ -27,5 +27,6 @@ public class AlgorithmDetail {
     private String codeSnippet;
 
     private String visualizationHint;
-}
 
+    private String mermaidCode;
+}

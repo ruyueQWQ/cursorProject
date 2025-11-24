@@ -75,6 +75,7 @@ public class KnowledgeServiceImpl implements KnowledgeService {
                 detail.setSpaceComplexity(section.complexity());
                 detail.setCodeSnippet(section.codeSnippet());
                 detail.setVisualizationHint(section.visualizationHint());
+                detail.setMermaidCode(section.mermaidCode());
                 detailMapper.insert(detail);
 
                 chunkCount += splitIntoChunks(topic.getId(), section, topic.getKeywords());
@@ -195,7 +196,8 @@ public class KnowledgeServiceImpl implements KnowledgeService {
                         detail.getTimeComplexity(),
                         detail.getSpaceComplexity(),
                         detail.getCodeSnippet(),
-                        detail.getVisualizationHint()))
+                        detail.getVisualizationHint(),
+                        detail.getMermaidCode()))
                 .toList();
         log.info("返回可视化数据 topicId={}, algorithms={}", topicId, blocks.size());
         return new AlgorithmVisualizationResponse(

@@ -79,6 +79,16 @@
             }
         }
       visualizationHint: 展示二维 DP 表格的填充过程。
+      mermaidCode: |
+        graph TD
+          Start["开始: 计算 dp(i, w)"] --> Check{"物品 i 是否放得下?"}
+          Check -- "放不下 (w < wt[i])" --> NoTake["不放: dp(i-1, w)"]
+          Check -- "能放下" --> Compare{"比较: 放 vs 不放"}
+          Compare -->|不放| Option1["保持: dp(i-1, w)"]
+          Compare -->|放| Option2["更新: dp(i-1, w-wt[i]) + val[i]"]
+          Option1 --> Max[取最大值]
+          Option2 --> Max
+          Max --> Result["存入 dp(i, w)"]
     - name: 最长公共子序列
       coreIdea: 寻找两个序列共有的最长子序列。
       steps: |
@@ -109,6 +119,25 @@
         3. 每次取出频率最小的两棵树合并，新树频率为两者之和，放回队列；
         4. 重复直到只剩一棵树。
       complexity: O(n log n)。
+      mermaidCode: |
+        graph TD
+          A((58)) --> B((25))
+          A --> C((33))
+          B --> D(a: 10)
+          B --> E(b: 15)
+          C --> F(c: 12)
+          C --> G((21))
+          G --> H(d: 4)
+          G --> I((17))
+          I --> J(e: 8)
+          I --> K(f: 9)
+          style A fill:#f9f,stroke:#333
+          style D fill:#ccf
+          style E fill:#ccf
+          style F fill:#ccf
+          style H fill:#ccf
+          style J fill:#ccf
+          style K fill:#ccf
 - title: 图算法
   category: 经典算法
   overview: 解决图结构相关问题的算法集合。

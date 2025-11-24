@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS algorithm_detail (
     space_complexity VARCHAR(64),
     code_snippet MEDIUMTEXT,
     visualization_hint TEXT,
+    mermaid_code TEXT,
     CONSTRAINT fk_detail_topic FOREIGN KEY (topic_id) REFERENCES knowledge_topic (id) ON DELETE CASCADE
 );
 
