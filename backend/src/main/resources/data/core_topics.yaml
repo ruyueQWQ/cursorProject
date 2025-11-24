@@ -54,15 +54,15 @@
       visualizationHint: 展示点集分割和中间条带的检查范围。
       mermaidCode: |
         graph TD
-          Start[按 X 轴排序点集] --> Split{点数 <= 3?}
+          Start["按 X 轴排序点集"] --> Split{"点数 <= 3?"}
           Split -- 是 --> Base[暴力求解]
-          Split -- 否 --> Divide[中线分割: Left, Right]
-          Divide --> RecL[递归求解 Left -> d1]
-          Divide --> RecR[递归求解 Right -> d2]
-          RecL --> MinD[d = min(d1, d2)]
+          Split -- 否 --> Divide["中线分割: Left, Right"]
+          Divide --> RecL["递归求解 Left -> d1"]
+          Divide --> RecR["递归求解 Right -> d2"]
+          RecL --> MinD["d = min(d1, d2)"]
           RecR --> MinD
-          MinD --> Strip[检查中线 2d 宽度的条带]
-          Strip --> Final[返回 min(d, strip_min)]
+          MinD --> Strip["检查中线 2d 宽度的条带"]
+          Strip --> Final["返回 min(d, strip_min)"]
 - title: 动态规划
   category: 算法思想
   overview: 通过把原问题分解为相对简单的子问题的方式求解复杂问题的方法。

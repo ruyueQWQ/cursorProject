@@ -19,6 +19,17 @@ const presetFilters = [
   { label: '复杂度分析', value: '复杂度' }
 ]
 
+const uniqueReferences = computed(() => {
+  const seen = new Set()
+  return references.value.filter(ref => {
+    if (seen.has(ref.topicId)) {
+      return false
+    }
+    seen.add(ref.topicId)
+    return true
+  })
+})
+
 const canSend = computed(() => question.value.trim().length > 0 && !loading.value)
 
 const toggleFilter = (value) => {
@@ -88,7 +99,7 @@ const handleReferenceSelect = (reference) => {
           暂无引用，提问时可以启用“重点知识”标签获得检索增强提示。
         </div>
         <KnowledgeReference
-          v-for="(ref, idx) in references"
+          v-for="(ref, idx) in uniqueReferences"
           :key="idx"
           :reference="ref"
           @select="handleReferenceSelect"
