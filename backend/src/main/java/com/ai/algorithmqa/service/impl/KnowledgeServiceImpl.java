@@ -90,7 +90,10 @@ public class KnowledgeServiceImpl implements KnowledgeService {
      */
     private int splitIntoChunks(Long topicId, KnowledgeIngestRequest.AlgorithmSection section, String keywords) {
         String source = section.coreIdea() + "\n" + section.steps() + "\n" + section.complexity();
-        String[] parts = source.split("(?<=。|！|？|\\.)");
+        // 优化切分逻辑：
+        // 1. (?<!\d)\. -> 匹配前面不是数字的点号（避免切分 1. 2. 等序号）
+        // 2. [。！？] -> 匹配中文句号、感叹号、问号
+        String[] parts = source.split("(?<=。|！|？|(?<!\\d)\\.)");
         int count = 0;
         for (String part : parts) {
             if (part == null || part.isBlank()) {
@@ -126,12 +129,10 @@ public class KnowledgeServiceImpl implements KnowledgeService {
         LambdaQueryWrapper<KnowledgeChunk> wrapper = Wrappers.lambdaQuery();
 
         if (filters != null && !filters.isEmpty()) {
-            filters.forEach(filter ->
-                    wrapper.and(w -> w.like(KnowledgeChunk::getKeywords, filter))
-            );
+            filters.forEach(filter -> wrapper.and(w -> w.like(KnowledgeChunk::getKeywords, filter)));
         }
 
-// 把主查询条件也改成匹配 keywords（或 keyword+content 二选一）
+        // 把主查询条件也改成匹配 keywords（或 keyword+content 二选一）
         wrapper.like(KnowledgeChunk::getKeywords, query);
         wrapper.last("limit " + (limit * 2));
         List<KnowledgeChunk> chunks = chunkMapper.selectList(wrapper);
@@ -141,8 +142,8 @@ public class KnowledgeServiceImpl implements KnowledgeService {
         }
 
         Map<Long, KnowledgeTopic> topicMap = topicMapper.selectBatchIds(
-                chunks.stream().map(KnowledgeChunk::getTopicId).collect(Collectors.toSet())
-        ).stream().collect(Collectors.toMap(KnowledgeTopic::getId, t -> t));
+                chunks.stream().map(KnowledgeChunk::getTopicId).collect(Collectors.toSet())).stream()
+                .collect(Collectors.toMap(KnowledgeTopic::getId, t -> t));
 
         List<ReferenceChunk> results = chunks.stream()
                 .peek(chunk -> chunk.setScore(similarityScore(chunk.getContent(), query)))
@@ -154,8 +155,7 @@ public class KnowledgeServiceImpl implements KnowledgeService {
                             chunk.getTopicId(),
                             topic != null ? topic.getTitle() : "未知主题",
                             chunk.getContent(),
-                            chunk.getScore()
-                    );
+                            chunk.getScore());
                 })
                 .collect(Collectors.toList());
         log.debug("知识检索命中 {} 条（limit={}）", results.size(), limit);
@@ -185,8 +185,7 @@ public class KnowledgeServiceImpl implements KnowledgeService {
             throw new IllegalArgumentException("未找到指定的知识主题");
         }
         List<AlgorithmDetail> details = detailMapper.selectList(
-                Wrappers.lambdaQuery(AlgorithmDetail.class).eq(AlgorithmDetail::getTopicId, topicId)
-        );
+                Wrappers.lambdaQuery(AlgorithmDetail.class).eq(AlgorithmDetail::getTopicId, topicId));
         List<AlgorithmVisualizationResponse.AlgorithmBlock> blocks = details.stream()
                 .map(detail -> new AlgorithmVisualizationResponse.AlgorithmBlock(
                         detail.getId(),
@@ -196,8 +195,7 @@ public class KnowledgeServiceImpl implements KnowledgeService {
                         detail.getTimeComplexity(),
                         detail.getSpaceComplexity(),
                         detail.getCodeSnippet(),
-                        detail.getVisualizationHint()
-                ))
+                        detail.getVisualizationHint()))
                 .toList();
         log.info("返回可视化数据 topicId={}, algorithms={}", topicId, blocks.size());
         return new AlgorithmVisualizationResponse(
@@ -206,8 +204,6 @@ public class KnowledgeServiceImpl implements KnowledgeService {
                 topic.getOverview(),
                 topic.getCategory(),
                 topic.getDifficultyLevel(),
-                blocks
-        );
+                blocks);
     }
 }
-

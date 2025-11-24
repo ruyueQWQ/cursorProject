@@ -27,22 +27,28 @@ public class DataBootstrap {
 
     @PostConstruct
     public void init() throws IOException {
-        Long count = topicMapper.selectCount(null);
-        if (count != null && count > 0) {
-            return;
-        }
         ClassPathResource resource = new ClassPathResource("data/core_topics.yaml");
         if (!resource.exists()) {
             log.warn("未找到示例知识库数据 data/core_topics.yaml");
             return;
         }
         try (InputStream stream = resource.getInputStream()) {
-            List<KnowledgeIngestRequest> topics = yamlMapper.readValue(stream, new TypeReference<>() {});
+            List<KnowledgeIngestRequest> topics = yamlMapper.readValue(stream, new TypeReference<>() {
+            });
+            int importedCount = 0;
             for (KnowledgeIngestRequest request : topics) {
-                knowledgeService.ingest(request);
+                // 检查是否已存在同名主题
+                Long count = topicMapper.selectCount(
+                        new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.ai.algorithmqa.domain.entity.KnowledgeTopic>()
+                                .eq(com.ai.algorithmqa.domain.entity.KnowledgeTopic::getTitle, request.title()));
+                if (count == null || count == 0) {
+                    knowledgeService.ingest(request);
+                    importedCount++;
+                }
             }
-            log.info("已自动导入 {} 条示例知识点", topics.size());
+            if (importedCount > 0) {
+                log.info("已增量导入 {} 条新知识点", importedCount);
+            }
         }
     }
 }
-
