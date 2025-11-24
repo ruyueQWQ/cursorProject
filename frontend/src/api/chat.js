@@ -20,3 +20,7 @@ export const fetchVisualization = (topicId) => {
   return client.get(`/knowledge/topics/${topicId}/visualizations`)
 }
 
+export const fetchFilters = () => {
+  return client.get('/knowledge/filters')
+}
+

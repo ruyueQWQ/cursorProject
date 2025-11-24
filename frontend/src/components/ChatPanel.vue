@@ -1,7 +1,8 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useChatStore } from '../stores/chatStore'
+import { fetchFilters } from '../api/chat'
 import MessageBubble from './MessageBubble.vue'
 import KnowledgeReference from './KnowledgeReference.vue'
 import VisualizationPanel from './VisualizationPanel.vue'
@@ -10,24 +11,41 @@ const chatStore = useChatStore()
 const { messages, references, loading, latency } = storeToRefs(chatStore)
 const question = ref('')
 const selectedFilters = ref([])
+const presetFilters = ref([])
 
-const presetFilters = [
-  { label: '分治策略', value: '分治' },
-  { label: '动态规划', value: '动态规划' },
-  { label: '贪心算法', value: '贪心' },
-  { label: '图算法', value: '图' },
-  { label: '复杂度分析', value: '复杂度' }
-]
+onMounted(async () => {
+  try {
+    const { data } = await fetchFilters()
+    presetFilters.value = data.data.map(keyword => ({
+      label: keyword,
+      value: keyword
+    }))
+  } catch (error) {
+    console.error('Failed to load filters:', error)
+    // Fallback to default filters
+    presetFilters.value = [
+      { label: '分治策略', value: '分治' },
+      { label: '动态规划', value: '动态规划' },
+      { label: '贪心算法', value: '贪心' },
+      { label: '图算法', value: '图' }
+    ]
+  }
+})
 
 const uniqueReferences = computed(() => {
-  const seen = new Set()
-  return references.value.filter(ref => {
-    if (seen.has(ref.topicId)) {
-      return false
+  const map = new Map()
+  references.value.forEach(ref => {
+    if (!map.has(ref.topicId)) {
+      map.set(ref.topicId, { ...ref })
+    } else {
+      const existing = map.get(ref.topicId)
+      // 合并内容，使用换行符分隔
+      existing.snippet += '\n\n' + ref.snippet
+      // 保留最高分数
+      existing.score = Math.max(existing.score, ref.score)
     }
-    seen.add(ref.topicId)
-    return true
   })
+  return Array.from(map.values())
 })
 
 const canSend = computed(() => question.value.trim().length > 0 && !loading.value)

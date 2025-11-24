@@ -25,5 +25,9 @@ public interface KnowledgeService {
      * 获取指定主题下的算法可视化信息，供前端展示。
      */
     AlgorithmVisualizationResponse findVisualizationByTopic(Long topicId);
-}
 
+    /**
+     * 获取所有可用的筛选标签（基于知识库中的关键词）。
+     */
+    List<String> getAvailableFilters();
+}

@@ -208,4 +208,21 @@ public class KnowledgeServiceImpl implements KnowledgeService {
                 topic.getDifficultyLevel(),
                 blocks);
     }
+
+    @Override
+    public List<String> getAvailableFilters() {
+        List<KnowledgeTopic> topics = topicMapper.selectList(null);
+        return topics.stream()
+                .flatMap(topic -> {
+                    if (topic.getKeywords() == null || topic.getKeywords().isBlank()) {
+                        return java.util.stream.Stream.empty();
+                    }
+                    return java.util.Arrays.stream(topic.getKeywords().split(","));
+                })
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .distinct()
+                .sorted()
+                .collect(Collectors.toList());
+    }
 }

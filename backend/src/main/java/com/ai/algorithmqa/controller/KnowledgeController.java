@@ -44,8 +44,8 @@ public class KnowledgeController {
      */
     @GetMapping("/search")
     public ApiResponse<List<ReferenceChunk>> search(@RequestParam String query,
-                                                    @RequestParam(required = false) List<String> filters,
-                                                    @RequestParam(defaultValue = "4") int topK) {
+            @RequestParam(required = false) List<String> filters,
+            @RequestParam(defaultValue = "4") int topK) {
         log.debug("知识检索 query={}, filters={}, topK={}", query, filters, topK);
         return ApiResponse.ok(knowledgeService.search(query, filters, topK));
     }
@@ -55,5 +55,10 @@ public class KnowledgeController {
         log.info("获取可视化数据 topicId={}", topicId);
         return ApiResponse.ok(knowledgeService.findVisualizationByTopic(topicId));
     }
-}
 
+    @GetMapping("/filters")
+    public ApiResponse<List<String>> getFilters() {
+        log.debug("获取可用筛选标签");
+        return ApiResponse.ok(knowledgeService.getAvailableFilters());
+    }
+}

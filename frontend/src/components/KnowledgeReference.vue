@@ -45,6 +45,7 @@ const handleClick = () => {
   margin: 0;
   color: #475569;
   font-size: 0.95rem;
+  white-space: pre-wrap; /* 保留换行符 */
 }
 .badge {
   font-size: 0.75rem;
