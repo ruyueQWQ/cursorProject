@@ -1,0 +1,33 @@
+- title: 分治策略
+  category: 算法思想
+  overview: 通过将问题拆分为子问题并递归求解，再合并结果以得到整体解。
+  keywords:
+    - 分治
+    - 递归
+    - 主定理
+  difficultyLevel: 2
+  algorithms:
+    - name: 归并排序
+      coreIdea: 将数组一分为二，递归排序，再在合并阶段保持有序。
+      steps: |
+        1. 将数组拆成两个子数组；
+        2. 分别递归排序子数组；
+        3. 双指针线性合并。
+      complexity: 时间复杂度 O(n log n)，空间复杂度 O(n)。
+      codeSnippet: |
+        public void mergeSort(int[] arr, int left, int right) {
+            if (left >= right) return;
+            int mid = (left + right) >> 1;
+            mergeSort(arr, left, mid);
+            mergeSort(arr, mid + 1, right);
+            merge(arr, left, mid, right);
+        }
+      visualizationHint: 使用分治树展示拆分和合并。
+    - name: 最近点对
+      coreIdea: 先按坐标排序，按中线分成两部分，递归求解，再在跨区带内扫描。
+      steps: |
+        1. 按 x 轴排序；
+        2. 递归求解左右最小距离；
+        3. 在带宽 2d 条带中检查跨区点对。
+      complexity: 平均与最坏时间复杂度皆为 O(n log n)。
+

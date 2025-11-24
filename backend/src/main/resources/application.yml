@@ -1,0 +1,37 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: algorithm-qa
+  datasource:
+    url: jdbc:mysql://localhost:3306/algorithm_qa?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: 123456
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jackson:
+    serialization:
+      WRITE_DATES_AS_TIMESTAMPS: false
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    banner: false
+
+dashscope:
+  api-key: sk-21ae713035714fd499aad20fc13a5dee
+  model: qwen-plus
+  endpoint: https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation
+  embedding-model: text-embedding-v1
+  embedding-endpoint: https://dashscope.aliyuncs.com/api/v1/services/embeddings/text-embedding/text-embedding
+
+retrieval:
+  top-k: 4
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
