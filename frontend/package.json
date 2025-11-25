@@ -12,6 +12,7 @@
     "axios": "^1.13.2",
     "markdown-it": "^14.1.0",
     "markdown-it-katex": "^2.0.3",
+    "markdown-it-multimd-table": "^4.2.3",
     "mermaid": "^11.12.1",
     "pinia": "^3.0.4",
     "vue": "^3.5.24",
