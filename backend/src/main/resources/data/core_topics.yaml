@@ -761,7 +761,7 @@
         1. 确保模数两两互质；
         2. 构造特解并求和；
         3. 对乘积取模得最终解。
-     complexity: O(k log M)，k 为方程数。
+      complexity: O(k log M)，k 为方程数。
 
 - title: 位运算技巧
   category: 技巧
@@ -815,3 +815,538 @@
         3. a ^= b;
       complexity: O(1)。
   
+
+- title: 高级数据结构
+  category: 高级算法
+  overview: 复杂数据结构的实现与应用，支持高效的数据操作。
+  keywords:
+    - 平衡树
+    - 跳表
+    - B树
+  difficultyLevel: 4
+  algorithms:
+    - name: 红黑树
+      coreIdea: 自平衡二叉搜索树，通过着色和旋转保持平衡。
+      steps: |
+        1. 插入节点并着红色；
+        2. 修复红黑性质（父子不能都是红）；
+        3. 通过旋转和重新着色调整；
+        4. 保证从根到叶的最长路径不超过最短路径的2倍。
+      complexity: 插入/删除/查找均为 O(log n)。
+      visualizationHint: 展示红黑节点和旋转过程。
+    - name: AVL 树
+      coreIdea: 严格平衡的二叉搜索树，任何节点的左右子树高度差不超过1。
+      steps: |
+        1. 按BST规则插入；
+        2. 回溯更新每个祖先的平衡因子；
+        3. 若|平衡因子| > 1，执行旋转（LL/RR/LR/RL）。
+      complexity: O(log n)，比红黑树平衡性更好但旋转次数略多。
+    - name: B 树
+      coreIdea: 多路平衡搜索树，每个节点可有多个键和子节点，适合磁盘存储。
+      steps: |
+        1. 插入到叶节点；
+        2. 若节点溢出（键数 > 2t-1），分裂节点；
+        3. 中间键提升到父节点；
+        4. 递归向上处理。
+      complexity: O(log n)，磁盘IO次数少。
+      visualizationHint: 展示节点分裂和合并。
+    - name: B+ 树
+      coreIdea: B树的变种，所有数据存在叶节点，叶节点间有链表连接。
+      steps: |
+        1. 内部节点只存索引；
+        2. 叶节点存完整数据并链接；
+        3. 支持高效范围查询。
+      complexity: O(log n)，范围查询性能优异。
+    - name: 跳表
+      coreIdea: 多层链表结构，通过随机化实现类似平衡树的性能。
+      steps: |
+        1. 最底层是完整有序链表；
+        2. 上层是下层的"快速通道"；
+        3. 查找时从顶层开始，不断下降；
+        4. 插入时随机决定节点高度。
+      complexity: 平均 O(log n)，实现简单。
+      codeSnippet: |
+        class SkipNode {
+            int val;
+            SkipNode[] forward; // 各层的前进指针
+            SkipNode(int val, int level) {
+                this.val = val;
+                forward = new SkipNode[level];
+            }
+        }
+    - name: 伸展树 (Splay Tree)
+      coreIdea: 自调整二叉搜索树，最近访问的节点会被旋转到根部。
+      steps: |
+        1. 查找节点；
+        2. 通过 zig/zig-zig/zig-zag 旋转将节点移到根；
+        3. 保证均摊 O(log n)。
+      complexity: 均摊 O(log n)，单次可能 O(n)。
+    - name: 笛卡尔树 (Treap)
+      coreIdea: 结合二叉搜索树和堆的性质，通过随机优先级维护平衡。
+      steps: |
+        1. 键值满足BST性质；
+        2. 优先级满足堆性质；
+        3. 通过旋转维护两个性质。
+      complexity: 期望 O(log n)。
+
+- title: 图论进阶
+  category: 高级算法
+  overview: 复杂图问题的高级算法。
+  keywords:
+    - 网络流
+    - 匹配
+    - 连通性
+  difficultyLevel: 4
+  algorithms:
+    - name: 最大流算法 (Ford-Fulkerson)
+      coreIdea: 不断寻找增广路径，直到无法增加流量为止。
+      steps: |
+        1. 初始化流为0；
+        2. 找到一条从源到汇的增广路径；
+        3. 沿路径增加流量（路径上最小容量）；
+        4. 更新残余网络；
+        5. 重复直到无增广路径。
+      complexity: O(E * max_flow)，取决于路径选择策略。
+    - name: Dinic 算法
+      coreIdea: 分层图 + 多路增广优化的最大流算法。
+      steps: |
+        1. BFS构建分层图；
+        2. DFS在分层图中找增广路并增流；
+        3. 重复直到无法分层。
+      complexity: O(V^2 * E)。
+    - name: 最小割 (Min-Cut)
+      coreIdea: 最大流等于最小割（Max-Flow Min-Cut 定理）。
+      steps: |
+        1. 求最大流；
+        2. 从源点在残余网络上DFS；
+        3. 能到达的点和不能到达的点之间的边构成最小割。
+      complexity: 同最大流算法。
+    - name: 二分图最大匹配 (Hungarian算法)
+      coreIdea: 通过增广路找到二分图的最大匹配。
+      steps: |
+        1. 初始化空匹配；
+        2. 对每个未匹配左顶点，DFS找增广路；
+        3. 若找到，更新匹配；
+        4. 重复直到无增广路。
+      complexity: O(V * E)。
+      visualizationHint: 展示二分图和匹配边。
+    - name: 强连通分量 (Kosaraju算法)
+      coreIdea: 找出有向图中的所有强连通分量。
+      steps: |
+        1. 对原图进行DFS，记录结束时间；
+        2. 对转置图按结束时间倒序DFS；
+        3. 每次DFS到达的节点构成一个强连通分量。
+      complexity: O(V + E)。
+    - name: Tarjan算法（强连通分量）
+      coreIdea: 一次DFS找出所有强连通分量。
+      steps: |
+        1. 维护时间戳和low值；
+        2. DFS遍历，用栈记录当前路径；
+        3. 当 low[u] == dfn[u] 时，栈中u及其上方节点构成SCC。
+      complexity: O(V + E)。
+      codeSnippet: |
+        void tarjan(int u) {
+            dfn[u] = low[u] = ++timestamp;
+            stack.push(u);
+            inStack[u] = true;
+            for (int v : graph[u]) {
+                if (dfn[v] == 0) {
+                    tarjan(v);
+                    low[u] = Math.min(low[u], low[v]);
+                } else if (inStack[v]) {
+                    low[u] = Math.min(low[u], dfn[v]);
+                }
+            }
+            if (dfn[u] == low[u]) {
+                // 找到一个SCC
+                while (stack.peek() != u) {
+                    int v = stack.pop();
+                    inStack[v] = false;
+                    scc[v] = sccCount;
+                }
+                stack.pop();
+                inStack[u] = false;
+                sccCount++;
+            }
+        }
+    - name: 欧拉回路
+      coreIdea: 遍历图中每条边恰好一次的回路。
+      steps: |
+        1. 检查是否存在欧拉回路（所有顶点度数为偶数）；
+        2. 从任意顶点开始DFS；
+        3. 删除已访问边，回溯时记录路径。
+      complexity: O(E)。
+    - name: 哈密尔顿回路
+      coreIdea: 遍历图中每个顶点恰好一次的回路。
+      steps: |
+        1. 回溯搜索所有路径；
+        2. 剪枝优化；
+        3. NP完全问题，无多项式算法。
+      complexity: 指数级。
+    - name: 2-SAT问题
+      coreIdea: 布尔可满足性问题的特例，每个子句恰好包含2个变量。
+      steps: |
+        1. 构建蕴含图；
+        2. 找强连通分量；
+        3. 若变量x和¬x在同一SCC中，则无解。
+      complexity: O(V + E)。
+
+- title: 计算几何
+  category: 高级算法
+  overview: 处理几何图形和空间问题的算法。
+  keywords:
+    - 凸包
+    - 线段相交
+    - 最近点对
+  difficultyLevel: 4
+  algorithms:
+    - name: Graham 扫描（凸包）
+      coreIdea: 找出平面点集的凸包。
+      steps: |
+        1. 找到最下方的点作为起点；
+        2. 按极角排序其他点；
+        3. 用栈维护凸包，遇到右转则弹栈；
+        4. 最终栈中的点构成凸包。
+      complexity: O(n log n)。
+      visualizationHint: 展示极角排序和栈的弹入弹出。
+    - name: Jarvis 步进（凸包）
+      coreIdea: 从最左点开始，每次选择极角最小的下一个点。
+      steps: |
+        1. 从最左点开始；
+        2. 找到相对当前点极角最小的下一个点；
+        3. 重复直到回到起点。
+      complexity: O(nh)，h为凸包顶点数。
+    - name: 旋转卡壳
+      coreIdea: 在凸包上寻找最远点对、最小外接矩形等。
+      steps: |
+        1. 维护两个"卡壳"（平行线）；
+        2. 旋转卡壳，更新答案；
+        3. 遍历所有方向。
+      complexity: O(n)（基于已知凸包）。
+    - name: 线段相交判定
+      coreIdea: 判断两条线段是否相交。
+      steps: |
+        1. 快速排斥试验：检查外接矩形是否相交；
+        2. 跨立试验：检查端点是否在对方线段两侧；
+        3. 使用叉积判断方向。
+      complexity: O(1)。
+      codeSnippet: |
+        // 叉积
+        double cross(Point a, Point b, Point c) {
+            return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+        }
+        boolean intersect(Segment s1, Segment s2) {
+            return cross(s1.p1, s1.p2, s2.p1) * cross(s1.p1, s1.p2, s2.p2) <= 0 &&
+                   cross(s2.p1, s2.p2, s1.p1) * cross(s2.p1, s2.p2, s1.p2) <= 0;
+        }
+    - name: 点在多边形内判定
+      coreIdea: 判断点是否在多边形内部。
+      steps: |
+        1. 射线法：从点引一条射线；
+        2. 统计与多边形边的交点数；
+        3. 奇数则在内部，偶数则在外部。
+      complexity: O(n)。
+    - name: 最近点对（分治）
+      coreIdea: 平面上找最近的两个点。
+      steps: |
+        1. 按x坐标排序并分治；
+        2. 递归求左右最小距离d；
+        3. 检查中间条带2d宽度内的点对。
+      complexity: O(n log n)。
+    - name: 多边形面积
+      coreIdea: 计算简单多边形的面积。
+      steps: |
+        1. 使用叉积累加；
+        2. 面积 = 0.5 * |Σ(x[i] * y[i+1] - x[i+1] * y[i])|。
+      complexity: O(n)。
+
+- title: 字符串高级算法
+  category: 高级算法
+  overview: 高级字符串处理和模式匹配算法。
+  keywords:
+    - 后缀
+    - 自动机
+    - 回文
+  difficultyLevel: 4
+  algorithms:
+    - name: 后缀数组 (Suffix Array)
+      coreIdea: 所有后缀按字典序排序的数组，支持高效字符串查询。
+      steps: |
+        1. 构建所有后缀；
+        2. 按字典序排序（倍增算法优化）；
+        3. 构建LCP数组（最长公共前缀）。
+      complexity: 构建 O(n log n)，查询 O(log n)。
+    - name: 后缀树 (Suffix Tree)
+      coreIdea: 压缩的Trie树，存储所有后缀。
+      steps: |
+        1. 使用Ukkonen算法线性构建；
+        2. 每个后缀对应从根到叶的一条路径；
+        3. 支持快速子串查询。
+      complexity: O(n) 构建，O(m) 查询。
+    - name: Manacher 算法
+      coreIdea: 线性时间找出所有回文子串。
+      steps: |
+        1. 在字符间插入分隔符（处理奇偶长度）；
+        2. 维护当前最右回文边界；
+        3. 利用对称性快速计算回文半径。
+      complexity: O(n)。
+      codeSnippet: |
+        String preprocess(String s) {
+            StringBuilder sb = new StringBuilder("^#");
+            for (char c : s.toCharArray()) {
+                sb.append(c).append('#');
+            }
+            return sb.append('$').toString();
+        }
+    - name: Z 算法
+      coreIdea: 计算字符串每个位置与前缀的最长公共前缀长度。
+      steps: |
+        1. 维护最右匹配区间 [l, r]；
+        2. 利用已知信息快速计算 Z[i]；
+        3. 需要时扩展匹配区间。
+      complexity: O(n)。
+    - name: Aho-Corasick 自动机细节
+      coreIdea: 多模式匹配自动机的构建细节。
+      steps: |
+        1. 构建Trie树；
+        2. BFS构建fail指针（类似KMP）；
+        3. 添加输出链接指针优化多次匹配。
+      complexity: O(n + m + z)。
+    - name: 最长回文子串
+      coreIdea: 找出字符串中最长的回文子串。
+      steps: |
+        1. 中心扩展法：枚举每个中心；
+        2. 或使用Manacher算法O(n)；
+        3. 或DP: dp[i][j] 表示 s[i..j] 是否回文。
+      complexity: 中心扩展 O(n^2)，Manacher O(n)，DP O(n^2)。
+
+- title: 动态规划进阶
+  category: 高级算法
+  overview: 复杂DP问题和优化技巧。
+  keywords:
+    - 状态压缩
+    - 区间DP
+    - 树形DP
+  difficultyLevel: 4
+  algorithms:
+    - name: 状态压缩DP
+      coreIdea: 用二进制表示状态，压缩DP维度。
+      steps: |
+        1. 用整数的位表示集合状态；
+        2. 状态转移通过位运算；
+        3. 适合集合大小 <= 20 的问题。
+      complexity: O(2^n * poly(n))。
+      codeSnippet: |
+        // 旅行商问题（TSP）
+        int[][] dp = new int[1 << n][n]; // dp[mask][i] 表示访问mask集合，当前在i
+        for (int mask = 0; mask < (1 << n); mask++) {
+            for (int i = 0; i < n; i++) {
+                if ((mask & (1 << i)) == 0) continue;
+                for (int j = 0; j < n; j++) {
+                    if ((mask & (1 << j)) != 0) continue;
+                    int newMask = mask | (1 << j);
+                    dp[newMask][j] = Math.min(dp[newMask][j], 
+                                             dp[mask][i] + dist[i][j]);
+                }
+            }
+        }
+    - name: 区间DP
+      coreIdea: 在区间上定义状态，通常枚举区间长度。
+      steps: |
+        1. dp[i][j] 表示区间 [i, j] 的最优解；
+        2. 枚举分割点 k: dp[i][j] = opt(dp[i][k] + dp[k+1][j] + cost)；
+        3. 从小区间到大区间递推。
+      complexity: 通常 O(n^3)。
+    - name: 树形DP
+      coreIdea: 在树结构上进行DP。
+      steps: |
+        1. 定义 dp[u][0/1] 表示以u为根的子树选/不选u的最优解；
+        2. 后序遍历，从叶子向根递推；
+        3. 合并子节点信息。
+      complexity: O(n)。
+      codeSnippet: |
+        // 树的最大独立集
+        void dfs(int u, int parent) {
+            dp[u][0] = 0; // 不选u
+            dp[u][1] = val[u]; // 选u
+            for (int v : adj[u]) {
+                if (v == parent) continue;
+                dfs(v, u);
+                dp[u][0] += Math.max(dp[v][0], dp[v][1]);
+                dp[u][1] += dp[v][0]; // 选u则不能选子节点
+            }
+        }
+    - name: 数位DP
+      coreIdea: 统计满足某种性质的数的个数。
+      steps: |
+        1. 按位处理数字；
+        2. 记录是否达到上界、是否有前导零等状态；
+        3. 递归+记忆化。
+      complexity: O(log n * 状态数)。
+    - name: 斜率优化DP
+      coreIdea: 通过维护凸包优化DP转移。
+      steps: |
+        1. 将DP转移写成斜率形式；
+        2. 维护下凸壳（单调队列）；
+        3. 用二分或单调性快速找最优转移点。
+      complexity: 从 O(n^2) 优化到 O(n log n) 或 O(n)。
+    - name: 四边形不等式优化
+      coreIdea: 利用决策单调性优化区间DP。
+      steps: |
+        1. 证明决策函数满足四边形不等式；
+        2. 维护决策区间；
+        3. 避免枚举所有分割点。
+      complexity: 从 O(n^3) 优化到 O(n^2)。
+
+- title: 概率与随机算法
+  category: 高级算法
+  overview: 利用随机化策略解决问题的算法。
+  keywords:
+    - 蒙特卡洛
+    - 随机化
+    - 概率
+  difficultyLevel: 3
+  algorithms:
+    - name: 蒙特卡洛算法（圆周率估算）
+      coreIdea: 通过随机采样估算数学值。
+      steps: |
+        1. 在正方形内随机生成点；
+        2. 统计落在内接圆内的点数；
+        3. π ≈ 4 * (圆内点数 / 总点数)。
+      complexity: O(n)，n为采样次数。
+    - name: 随机化快速选择
+      coreIdea: 随机选择pivot优化快速选择算法。
+      steps: |
+        1. 随机选择pivot；
+        2. 分区并递归；
+        3. 期望线性时间。
+      complexity: 期望 O(n)，最坏 O(n^2)。
+    - name: Reservoir Sampling（蓄水池抽样）
+      coreIdea: 从数据流中等概率抽样k个元素。
+      steps: |
+        1. 前k个元素直接放入蓄水池；
+        2. 第i个元素(i>k)以 k/i 概率替换蓄水池中随机元素；
+        3. 保证每个元素被选中概率为 k/n。
+      complexity: O(n)，空间 O(k)。
+      codeSnippet: |
+        int[] reservoir = new int[k];
+        Random rand = new Random();
+        for (int i = 0; i < stream.length; i++) {
+            if (i < k) {
+                reservoir[i] = stream[i];
+            } else {
+                int j = rand.nextInt(i + 1);
+                if (j < k) reservoir[j] = stream[i];
+            }
+        }
+    - name: Miller-Rabin 素性测试
+      coreIdea: 概率算法判断大数是否为素数。
+      steps: |
+        1. 选择随机基a；
+        2. 计算 a^(n-1) mod n；
+        3. 多轮测试，减少误判概率。
+      complexity: O(k log^3 n)，k为测试轮数。
+    - name: 布隆过滤器 (Bloom Filter)
+      coreIdea: 空间高效的概率数据结构，判断元素是否可能在集合中。
+      steps: |
+        1. 使用k个哈希函数；
+        2. 插入时设置k个位为1；
+        3. 查询时检查k个位是否都为1。
+      complexity: O(k)，允许假阳性但无假阴性。
+    - name: Skip List 随机化
+      coreIdea: 通过随机决定节点层数实现期望平衡。
+      steps: |
+        1. 插入时抛硬币决定层数；
+        2. 期望log n层；
+        3. 避免复杂的平衡调整。
+      complexity: 期望 O(log n)。
+
+- title: 近似算法
+  category: 高级算法
+  overview: 对NP困难问题的近似求解算法。
+  keywords:
+    - NP困难
+    - 近似比
+    - 启发式
+  difficultyLevel: 4
+  algorithms:
+    - name: 顶点覆盖近似算法
+      coreIdea: 找最小顶点集覆盖所有边。
+      steps: |
+        1. 不断选择未覆盖的边(u,v)；
+        2. 将u和v都加入顶点集；
+        3. 删除被覆盖的边。
+      complexity: O(E)，近似比为2。
+    - name: TSP 近似算法（MST方法）
+      coreIdea: 通过最小生成树近似旅行商问题。
+      steps: |
+        1. 构建MST；
+        2. DFS遍历MST得到欧拉回路；
+        3. 跳过重复顶点得到哈密尔顿回路。
+      complexity: O(V^2)，近似比为2（满足三角不等式）。
+    - name: 装箱问题 (Bin Packing)
+      coreIdea: 用最少的箱子装下所有物品。
+      steps: |
+        1. First Fit: 放入第一个能装下的箱子；
+        2. Best Fit: 放入剩余空间最小的箱子；
+        3. First Fit Decreasing: 先按大小降序排序。
+      complexity: O(n log n)，FFD近似比为 11/9。
+    - name: 集合覆盖贪心算法
+      coreIdea: 用最少的集合覆盖所有元素。
+      steps: |
+        1. 每次选择覆盖最多未覆盖元素的集合；
+        2. 重复直到所有元素被覆盖。
+      complexity: O(U * S)，近似比为 ln n + 1。
+    - name: 背包问题 FPTAS
+      coreIdea: 全多项式时间近似方案。
+      steps: |
+        1. 缩放价值（除以某个因子）；
+        2. 用伪多项式DP求解；
+        3. 得到 (1-ε) 近似解。
+      complexity: O(n^3 / ε)。
+
+- title: 并行与分布式算法
+  category: 高级算法
+  overview: 利用并行计算提高效率的算法。
+  keywords:
+    - 并行
+    - MapReduce
+    - PRAM
+  difficultyLevel: 4
+  algorithms:
+    - name: 并行归并排序
+      coreIdea: 递归分治部分并行执行。
+      steps: |
+        1. 将数组分成p份；
+        2. 并行排序每份；
+        3. 多路归并。
+      complexity: O((n log n) / p + log p)。
+    - name: 并行前缀和 (Prefix Sum)
+      coreIdea: 并行计算累加和数组。
+      steps: |
+        1. 使用二叉树结构；
+        2. 上扫阶段：并行计算部分和；
+        3. 下扫阶段：并行分发前缀和。
+      complexity: O(log n) 步，O(n) 工作量。
+    - name: MapReduce 框架
+      coreIdea: 大数据处理的编程模型。
+      steps: |
+        1. Map: 并行处理输入数据，生成键值对；
+        2. Shuffle: 按键分组；
+        3. Reduce: 并行聚合每个键的值。
+      complexity: 取决于具体问题和集群规模。
+      visualizationHint: 展示Map和Reduce阶段的数据流。
+    - name: 并行BFS
+      coreIdea: 层次遍历时并行处理同一层的节点。
+      steps: |
+        1. 维护当前层队列；
+        2. 并行处理队列中所有节点；
+        3. 收集下一层节点。
+      complexity: O(V + E / p)，p为处理器数。
+    - name: 分布式哈希表 (DHT)
+      coreIdea: 在多台机器间分布存储键值对。
+      steps: |
+        1. 一致性哈希分配数据到节点；
+        2. 节点间协作查找；
+        3. 支持动态加入/离开。
+      complexity: O(log n) 跳数（Chord等协议）。
