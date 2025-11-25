@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -40,24 +42,47 @@ public class DashScopeEmbeddingService implements EmbeddingService {
         }
 
         try {
-            Map<String, Object> input = new HashMap<>();
-            input.put("model", properties.embeddingModel());
-            input.put("input", text);
+            // 构建请求体： DashScope embedding API 期望的格式
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("model", properties.embeddingModel());
 
-            // 显式序列化为 JSON 字符串，确保 Content-Type 生效且格式正确
-            String jsonBody = mapper.writeValueAsString(input);
-            org.springframework.http.HttpEntity<String> entity = new org.springframework.http.HttpEntity<>(jsonBody);
+            // input 字段需要是一个包含 "texts" 数组的对象
+            Map<String, Object> inputMap = new HashMap<>();
+            inputMap.put("texts", List.of(text));
+            requestBody.put("input", inputMap);
 
-            ResponseEntity<String> response = restTemplate.postForEntity(properties.embeddingEndpoint(), entity,
+            // 序列化为 JSON 字符串
+            String jsonBody = mapper.writeValueAsString(requestBody);
+
+            // 设置必需的 HTTP headers
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Authorization", "Bearer " + properties.apiKey());
+            headers.set("Content-Type", "application/json");
+
+            HttpEntity<String> entity = new HttpEntity<>(jsonBody, headers);
+
+            ResponseEntity<String> response = restTemplate.postForEntity(
+                    properties.embeddingEndpoint(),
+                    entity,
                     String.class);
+
             JsonNode node = mapper.readTree(response.getBody());
-            JsonNode vector = node.path("output").path("embedding");
-            if (vector.isMissingNode()) {
-                return pseudoEmbedding(text);
+            JsonNode embeddings = node.path("output").path("embeddings");
+
+            // embeddings 是一个数组，我们需要第一个元素的 embedding 字段
+            if (embeddings.isArray() && embeddings.size() > 0) {
+                JsonNode vector = embeddings.get(0).path("embedding");
+                if (!vector.isMissingNode() && vector.isArray()) {
+                    List<Double> result = new ArrayList<>();
+                    vector.forEach(value -> result.add(value.asDouble()));
+                    log.info("调用 DashScope embedding 成功{}", result);
+                    return result;
+
+                }
             }
-            List<Double> result = new ArrayList<>();
-            vector.forEach(value -> result.add(value.asDouble()));
-            return result;
+
+            log.warn("DashScope embedding 响应格式不正确，使用回退策略");
+            return pseudoEmbedding(text);
         } catch (Exception e) {
             log.warn("调用 DashScope embedding 失败，使用回退策略: {}", e.getMessage());
             return pseudoEmbedding(text);
