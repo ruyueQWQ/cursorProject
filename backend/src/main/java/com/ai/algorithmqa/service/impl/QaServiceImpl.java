@@ -20,9 +20,9 @@ import java.util.stream.Collectors;
 /**
  * 问答主流程实现：
  * <ul>
- *     <li>按需执行知识检索得到引用片段；</li>
- *     <li>基于片段和提问构造 Prompt，调用 DashScope（通义千问）；</li>
- *     <li>记录问答日志，返回给前端。</li>
+ * <li>按需执行知识检索得到引用片段；</li>
+ * <li>基于片段和提问构造 Prompt，调用 DashScope（通义千问）；</li>
+ * <li>记录问答日志，返回给前端。</li>
  * </ul>
  */
 @Slf4j
@@ -42,7 +42,8 @@ public class QaServiceImpl implements QaService {
         log.debug("QA-Service 接到请求 question={}, useKB={}, topK={}, filters={}",
                 request.question(), request.useKnowledgeBase(), request.topK(), request.contextFilters());
         List<ReferenceChunk> references = request.useKnowledgeBase()
-                ? knowledgeService.search(request.question(), request.contextFilters(), request.topK() != null ? request.topK() : 4)
+                ? knowledgeService.search(request.question(), request.contextFilters(),
+                        request.topK() != null ? request.topK() : 4)
                 : List.of();
         log.debug("知识检索返回 {} 条片段", references.size());
 
@@ -88,5 +89,52 @@ public class QaServiceImpl implements QaService {
                 .append("4. 以中文输出，如需代码示例请选择 Java 或 Python。\n");
         return builder.toString();
     }
-}
 
+    @Override
+    public org.springframework.web.servlet.mvc.method.annotation.SseEmitter streamAnswer(QaRequest request) {
+        org.springframework.web.servlet.mvc.method.annotation.SseEmitter emitter = new org.springframework.web.servlet.mvc.method.annotation.SseEmitter(
+                300000L); // 5 minutes timeout
+
+        java.util.concurrent.CompletableFuture.runAsync(() -> {
+            try {
+                log.debug("QA-Service 流式请求 question={}, useKB={}, topK={}, filters={}",
+                        request.question(), request.useKnowledgeBase(), request.topK(), request.contextFilters());
+
+                List<ReferenceChunk> references = request.useKnowledgeBase()
+                        ? knowledgeService.search(request.question(), request.contextFilters(),
+                                request.topK() != null ? request.topK() : 4)
+                        : List.of();
+
+                // 发送引用信息
+                if (!references.isEmpty()) {
+                    emitter.send(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event()
+                            .name("reference")
+                            .data(references));
+                }
+
+                String prompt = buildPrompt(request.question(), references);
+
+                // 流式调用大模型
+                dashScopeClient.streamChat(prompt, emitter);
+
+                // 注意：日志记录比较困难，因为 streamChat 是异步推送到 emitter 的，
+                // 如果需要记录完整回答，需要在 DashScopeClient 中收集，或者这里不记录完整回答只记录请求。
+                // 简单起见，这里只记录请求日志，回答留空。
+                QaLog logEntry = new QaLog();
+                logEntry.setQuestion(request.question());
+                logEntry.setReferenceSummary(references.stream()
+                        .map(ref -> ref.topicTitle() + ":" + ref.snippet())
+                        .collect(Collectors.joining(" | ")));
+                logEntry.setModel("qwen-plus"); // 假设
+                logEntry.setCreatedAt(LocalDateTime.now());
+                qaLogMapper.insert(logEntry);
+
+            } catch (Exception e) {
+                log.error("流式问答处理失败", e);
+                emitter.completeWithError(e);
+            }
+        });
+
+        return emitter;
+    }
+}

@@ -43,8 +43,8 @@ public class DataBootstrap {
 
                 Long count = topicMapper.selectCount(query);
                 if (count != null && count > 0) {
-                    log.info("发现已存在主题 [{}]，正在删除旧数据以重新导入...", request.title());
-                    topicMapper.delete(query);
+                    log.info("主题 [{}] 已存在，跳过导入以保留用户数据（如动画URL）", request.title());
+                    continue;
                 }
 
                 knowledgeService.ingest(request);

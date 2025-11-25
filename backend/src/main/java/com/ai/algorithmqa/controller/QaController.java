@@ -27,9 +27,9 @@ public class QaController {
     /**
      * 处理一次问答请求：
      * <ol>
-     *     <li>校验问题内容、可选的检索过滤条件；</li>
-     *     <li>委托服务层执行 RAG + DashScope 调用；</li>
-     *     <li>封装为统一响应结构返回给前端。</li>
+     * <li>校验问题内容、可选的检索过滤条件；</li>
+     * <li>委托服务层执行 RAG + DashScope 调用；</li>
+     * <li>封装为统一响应结构返回给前端。</li>
      * </ol>
      */
     @PostMapping
@@ -38,5 +38,12 @@ public class QaController {
                 request.question(), request.contextFilters(), request.topK());
         return ApiResponse.ok(qaService.answer(request));
     }
-}
 
+    @PostMapping("/stream")
+    public org.springframework.web.servlet.mvc.method.annotation.SseEmitter streamAsk(
+            @Valid @RequestBody QaRequest request) {
+        log.info("收到流式问答请求，question={}, filters={}, topK={}",
+                request.question(), request.contextFilters(), request.topK());
+        return qaService.streamAnswer(request);
+    }
+}

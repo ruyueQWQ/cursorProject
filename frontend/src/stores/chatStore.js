@@ -64,6 +64,58 @@ export const useChatStore = defineStore('chat', {
         this.loading = false
       }
     },
+    async streamAskQuestion(question, filters = []) {
+      this.messages.push({
+        role: 'user',
+        content: question,
+        timestamp: formatTimestamp()
+      })
+
+      const assistantMessageIndex = this.messages.push({
+        role: 'assistant',
+        content: '', // 初始为空
+        timestamp: formatTimestamp()
+      }) - 1
+
+      this.loading = true
+      // 重置引用
+      this.references = []
+      this.visualization = null
+      this.activeTopicId = null
+
+      const startTime = Date.now()
+
+      await import('../api/chat').then(({ streamAsk }) => {
+        streamAsk(
+          {
+            question,
+            contextFilters: filters,
+            topK: 4
+          },
+          (chunk) => {
+            // onChunk: 追加文本
+            this.messages[assistantMessageIndex].content += chunk
+          },
+          (references) => {
+            // onReference: 更新引用
+            this.references = references
+            if (this.references.length > 0) {
+              this.loadVisualization(this.references[0].topicId)
+            }
+          },
+          () => {
+            // onDone
+            this.loading = false
+            this.latency = Date.now() - startTime
+          },
+          (error) => {
+            // onError
+            this.messages[assistantMessageIndex].content += `\n[出错: ${error.message}]`
+            this.loading = false
+          }
+        )
+      })
+    },
     async loadVisualization(topicId) {
       console.log('loadVisualization called with:', topicId, 'current active:', this.activeTopicId)
       if (!topicId) {

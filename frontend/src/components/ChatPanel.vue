@@ -60,7 +60,8 @@ const toggleFilter = (value) => {
 
 const handleSubmit = () => {
   if (!canSend.value) return
-  chatStore.askQuestion(question.value, selectedFilters.value)
+  if (!canSend.value) return
+  chatStore.streamAskQuestion(question.value, selectedFilters.value)
   question.value = ''
 }
 

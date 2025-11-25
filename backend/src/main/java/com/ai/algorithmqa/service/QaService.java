@@ -15,5 +15,6 @@ public interface QaService {
      * @return 模型回答 + 引用片段 + 元信息
      */
     QaResponse answer(QaRequest request);
-}
 
+    org.springframework.web.servlet.mvc.method.annotation.SseEmitter streamAnswer(QaRequest request);
+}

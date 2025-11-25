@@ -41,8 +41,7 @@ public class DashScopeClient {
         try {
             Map<String, Object> body = Map.of(
                     "model", properties.model(),
-                    "input", Map.of("prompt", prompt)
-            );
+                    "input", Map.of("prompt", prompt));
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -62,5 +61,72 @@ public class DashScopeClient {
             throw new RuntimeException("调用阿里云大模型失败：" + e.getMessage(), e);
         }
     }
-}
 
+    public void streamChat(String prompt, org.springframework.web.servlet.mvc.method.annotation.SseEmitter emitter) {
+        if (properties.apiKey() == null || properties.apiKey().isBlank()) {
+            try {
+                String mock = """
+                        【模拟回答】当前未配置阿里云DashScope API Key。
+                        你可以在 application.yml 或环境变量 DASHSCOPE_API_KEY 中配置后获得真实回答。
+                        下面是基于知识库模板给出的示例回答：
+                        """ + prompt;
+                emitter.send(mock);
+                emitter.complete();
+            } catch (Exception e) {
+                emitter.completeWithError(e);
+            }
+            return;
+        }
+
+        try {
+            Map<String, Object> body = Map.of(
+                    "model", properties.model(),
+                    "input", Map.of("prompt", prompt),
+                    "parameters", Map.of("incremental_output", true));
+
+            okhttp3.OkHttpClient client = new okhttp3.OkHttpClient.Builder()
+                    .connectTimeout(java.time.Duration.ofSeconds(30))
+                    .readTimeout(java.time.Duration.ofSeconds(300))
+                    .build();
+
+            String jsonBody = objectMapper.writeValueAsString(body);
+            okhttp3.Request request = new okhttp3.Request.Builder()
+                    .url(properties.endpoint())
+                    .post(okhttp3.RequestBody.create(jsonBody, okhttp3.MediaType.parse("application/json")))
+                    .addHeader("Authorization", "Bearer " + properties.apiKey())
+                    .addHeader("Content-Type", "application/json")
+                    .addHeader("X-DashScope-SSE", "enable")
+                    .build();
+
+            try (okhttp3.Response response = client.newCall(request).execute()) {
+                if (!response.isSuccessful()) {
+                    throw new RuntimeException("Unexpected code " + response);
+                }
+
+                java.io.BufferedReader reader = new java.io.BufferedReader(response.body().charStream());
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    if (line.startsWith("data:")) {
+                        String data = line.substring(5).trim();
+                        if (data.isEmpty())
+                            continue;
+
+                        JsonNode node = objectMapper.readTree(data);
+                        String content = node.path("output").path("text").asText();
+                        if (content != null && !content.isEmpty()) {
+                            emitter.send(content);
+                        }
+
+                        if (node.path("output").path("finish_reason").asText().equals("stop")) {
+                            break;
+                        }
+                    }
+                }
+                emitter.complete();
+            }
+        } catch (Exception e) {
+            log.error("DashScope 流式调用失败", e);
+            emitter.completeWithError(e);
+        }
+    }
+}
