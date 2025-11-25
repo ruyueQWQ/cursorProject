@@ -111,6 +111,7 @@ public class AdminAlgorithmController {
     }
 
     @PostMapping("/{id}/animation")
+    @org.springframework.transaction.annotation.Transactional
     public ApiResponse<String> uploadAnimation(
             @PathVariable Long id,
             @RequestParam("file") MultipartFile file) {
