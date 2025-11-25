@@ -120,8 +120,7 @@ public class KnowledgeServiceImpl implements KnowledgeService {
     }
 
     /**
-     * 通过 MyBatis-Plus 的查询条件组合关键词过滤与模糊匹配，
-     * 再用简单的 token 匹配计算粗略得分，返回 Top-K 参考片段。
+     * 纯语义检索：不使用 SQL LIKE 过滤，直接对所有候选进行向量相似度计算
      */
     @Override
     public List<ReferenceChunk> search(String query, List<String> filters, int topK) {
@@ -129,25 +128,39 @@ public class KnowledgeServiceImpl implements KnowledgeService {
 
         LambdaQueryWrapper<KnowledgeChunk> wrapper = Wrappers.lambdaQuery();
 
+        // 只应用用户指定的过滤条件（如算法类别），不对 query 本身做 LIKE 过滤
         if (filters != null && !filters.isEmpty()) {
             filters.forEach(filter -> wrapper.and(w -> w.like(KnowledgeChunk::getKeywords, filter)));
         }
 
-        // 把主查询条件也改成匹配 keywords（或 keyword+content 二选一）
-        wrapper.like(KnowledgeChunk::getKeywords, query);
-        wrapper.last("limit " + (limit * 2));
-        List<KnowledgeChunk> chunks = chunkMapper.selectList(wrapper);
-        if (chunks.isEmpty()) {
+        // 获取所有符合过滤条件的候选（如果没有过滤条件，则获取全部）
+        // 为了性能考虑，设置一个合理的上限
+        wrapper.last("limit 100");
+        List<KnowledgeChunk> candidates = chunkMapper.selectList(wrapper);
+
+        if (candidates.isEmpty()) {
             log.info("知识检索无结果 query={}, filters={}", query, filters);
             return List.of();
         }
 
+        // 使用 embedding 计算语义相似度进行排序
+        List<Double> queryEmbedding = embeddingService.embed(query);
+        candidates.forEach(chunk -> {
+            try {
+                List<Double> chunkEmbedding = parseEmbedding(chunk.getEmbeddingJson());
+                double similarity = cosineSimilarity(queryEmbedding, chunkEmbedding);
+                chunk.setScore(similarity);
+            } catch (Exception e) {
+                log.warn("解析 embedding 失败，使用词频得分 chunkId={}", chunk.getId());
+                chunk.setScore(similarityScore(chunk.getContent(), query));
+            }
+        });
+
         Map<Long, KnowledgeTopic> topicMap = topicMapper.selectBatchIds(
-                chunks.stream().map(KnowledgeChunk::getTopicId).collect(Collectors.toSet())).stream()
+                candidates.stream().map(KnowledgeChunk::getTopicId).collect(Collectors.toSet())).stream()
                 .collect(Collectors.toMap(KnowledgeTopic::getId, t -> t));
 
-        List<ReferenceChunk> results = chunks.stream()
-                .peek(chunk -> chunk.setScore(similarityScore(chunk.getContent(), query)))
+        List<ReferenceChunk> results = candidates.stream()
                 .sorted(Comparator.comparingDouble(KnowledgeChunk::getScore).reversed())
                 .limit(limit)
                 .map(chunk -> {
@@ -159,8 +172,45 @@ public class KnowledgeServiceImpl implements KnowledgeService {
                             chunk.getScore());
                 })
                 .collect(Collectors.toList());
-        log.debug("知识检索命中 {} 条（limit={}）", results.size(), limit);
+        log.debug("知识检索命中 {} 条（limit={}），使用纯语义相似度排序", results.size(), limit);
         return results;
+    }
+
+    /**
+     * 解析 JSON 格式的 embedding 向量
+     */
+    private List<Double> parseEmbedding(String embeddingJson) {
+        try {
+            return objectMapper.readValue(embeddingJson,
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, Double.class));
+        } catch (Exception e) {
+            throw new RuntimeException("Embedding 反序列化失败", e);
+        }
+    }
+
+    /**
+     * 计算两个向量的余弦相似度
+     */
+    private double cosineSimilarity(List<Double> vec1, List<Double> vec2) {
+        if (vec1.size() != vec2.size()) {
+            throw new IllegalArgumentException("向量维度不匹配");
+        }
+
+        double dotProduct = 0.0;
+        double norm1 = 0.0;
+        double norm2 = 0.0;
+
+        for (int i = 0; i < vec1.size(); i++) {
+            dotProduct += vec1.get(i) * vec2.get(i);
+            norm1 += vec1.get(i) * vec1.get(i);
+            norm2 += vec2.get(i) * vec2.get(i);
+        }
+
+        if (norm1 == 0.0 || norm2 == 0.0) {
+            return 0.0;
+        }
+
+        return dotProduct / (Math.sqrt(norm1) * Math.sqrt(norm2));
     }
 
     /**
