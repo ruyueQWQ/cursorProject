@@ -130,7 +130,7 @@ public class KnowledgeServiceImpl implements KnowledgeService {
 
         // 只应用用户指定的过滤条件（如算法类别），不对 query 本身做 LIKE 过滤
         if (filters != null && !filters.isEmpty()) {
-            filters.forEach(filter -> wrapper.and(w -> w.like(KnowledgeChunk::getKeywords, filter)));
+            filters.forEach(filter -> wrapper.or(w -> w.like(KnowledgeChunk::getKeywords, filter)));
         }
 
         // 获取所有符合过滤条件的候选（如果没有过滤条件，则获取全部）
