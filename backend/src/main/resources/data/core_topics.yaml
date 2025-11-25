@@ -477,7 +477,7 @@
         3. 堆大小减 1，重新调整堆；
         4. 重复步骤 2-3。
       complexity: O(n log n)，空间 O(1)。
-      code Snippet: |
+      codeSnippet: |
         // 堆调整
         void heapify(int[] arr, int n, int i) {
             int largest = i;
