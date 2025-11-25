@@ -29,7 +29,7 @@
           A -->|Split| C[1, 3, 6, 2]
           B -->|Split| D[8, 4]
           B -->|Split| E[5, 7]
-          C -->|Split| F[1, 3]
+          C -->|Sp lit| F[1, 3]
           C -->|Split| G[6, 2]
           D -->|Split| H[8]
           D -->|Split| I[4]
@@ -63,6 +63,28 @@
           RecR --> MinD
           MinD --> Strip["检查中线 2d 宽度的条带"]
           Strip --> Final["返回 min(d, strip_min)"]
+    - name: 快速选择算法
+      coreIdea: 基于快速排序的划分思想，在未排序数组中找第 K 小的元素。
+      steps: |
+        1. 选择 pivot 并进行分区；
+        2. 如果 pivot 位置恰好是 k，直接返回；
+        3. 否则在 pivot 左侧或右侧递归查找。
+      complexity: 平均 O(n)，最坏 O(n^2)。
+      visualizationHint: 展示每次划分后如何缩小搜索范围。
+    - name: 快速幂（分治）
+      coreIdea: 计算 a^n 时，利用 a^n = (a^(n/2))^2 减少计算次数。
+      steps: |
+        1. 若 n = 0，返回 1；
+        2. 若 n 为偶数，result = pow(a, n/2)^2；
+        3. 若 n 为奇数，result = a * pow(a, n/2)^2。
+      complexity: O(log n)。
+      codeSnippet: |
+        long pow(long a, int n) {
+            if (n == 0) return 1;
+            long half = pow(a, n / 2);
+            return (n % 2 == 0) ? half * half : a * half * half;
+        }
+
 - title: 动态规划
   category: 算法思想
   overview: 通过把原问题分解为相对简单的子问题的方式求解复杂问题的方法。
@@ -118,6 +140,54 @@
           Mismatch --> Left["dp[i][j-1] (左方)"]
           style Match fill:#bfb
           style Mismatch fill:#fbb
+    - name: 编辑距离
+      coreIdea: 计算将一个字符串转换为另一个字符串所需的最少操作次数（插入、删除、替换）。
+      steps: |
+        1. dp[i][j] 表示 word1[0..i-1] 转换为 word2[0..j-1] 的最小操作数；
+        2. 若 word1[i-1] == word2[j-1]，dp[i][j] = dp[i-1][j-1]；
+        3. 否则 dp[i][j] = 1 + min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1])。
+      complexity: O(mn)。
+      visualizationHint: 展示三个方向的转移（插入、删除、替换）。
+    - name: 最长递增子序列
+      coreIdea: 找出数组中最长的严格递增子序列。
+      steps: |
+        1. dp[i] 表示以 nums[i] 结尾的最长递增子序列长度；
+        2. dp[i] = max(dp[j] + 1)，其中 j < i 且 nums[j] < nums[i]；
+        3. 答案为 max(dp[i])。
+      complexity: 朴素 O(n^2)，二分优化 O(n log n)。
+      codeSnippet: |
+        // 二分优化版本
+        List<Integer> tails = new ArrayList<>();
+        for (int num : nums) {
+            int pos = Collections.binarySearch(tails, num);
+            if (pos < 0) pos = -(pos + 1);
+            if (pos == tails.size()) tails.add(num);
+            else tails.set(pos, num);
+        }
+        return tails.size();
+    - name: 矩阵链乘法
+      coreIdea: 确定矩阵连乘的最优括号化方案，使乘法次数最少。
+      steps: |
+        1. dp[i][j] 表示矩阵 i 到 j 连乘的最小代价；
+        2. 枚举分割点 k: dp[i][j] = min(dp[i][k] + dp[k+1][j] + cost(i,k,j))；
+        3. 自底向上填充 DP 表。
+      complexity: O(n^3)。
+      visualizationHint: 展示不同分割点的代价比较。
+    - name: 最大子数组和 (Kadane)
+      coreIdea: 找到连续子数组的最大和。
+      steps: |
+        1. 维护 currentSum 和 maxSum；
+        2. 遍历数组，currentSum = max(num, currentSum + num)；
+        3. 更新 maxSum = max(maxSum, currentSum)。
+      complexity: O(n)。
+      codeSnippet: |
+        int maxSum = nums[0], currentSum = nums[0];
+        for (int i = 1; i < nums.length; i++) {
+            currentSum = Math.max(nums[i], currentSum + nums[i]);
+            maxSum = Math.max(maxSum, currentSum);
+        }
+        return maxSum;
+
 - title: 贪心算法
   category: 算法思想
   overview: 在对问题求解时，总是做出在当前看来是最好的选择。
@@ -172,6 +242,22 @@
           style H fill:#ccf
           style J fill:#ccf
           style K fill:#ccf
+    - name: 分数背包
+      coreIdea: 物品可以分割，每次选性价比最高的物品装入。
+      steps: |
+        1. 计算每个物品的单位价值（value/weight）；
+        2. 按单位价值降序排序；
+        3. 依次装入物品，可装满则全装，否则装剩余容量。
+      complexity: O(n log n)。
+      visualizationHint: 展示物品按性价比排序和装入过程。
+    - name: 区间覆盖
+      coreIdea: 用最少的区间覆盖给定范围。
+      steps: |
+        1. 将区间按起点排序；
+        2. 贪心选择能覆盖当前未覆盖部分且右端点最远的区间；
+        3. 重复直到覆盖完整范围。
+      complexity: O(n log n)。
+
 - title: 图算法
   category: 经典算法
   overview: 解决图结构相关问题的算法集合。
@@ -217,6 +303,29 @@
           style A fill:#bfb
           style C fill:#bfb
           style D fill:#dfd
+    - name: Bellman-Ford 算法
+      coreIdea: 允许负权边的单源最短路径算法，能检测负环。
+      steps: |
+        1. 初始化 dist[]，起点为 0；
+        2. 重复 V-1 次：松弛所有边；
+        3. 再遍历所有边，若还能松弛则存在负环。
+      complexity: O(VE)。
+      visualizationHint: 展示多轮松弛过程和负环检测。
+    - name: Floyd-Warshall 算法
+      coreIdea: 求所有顶点对之间的最短路径。
+      steps: |
+        1. 初始化 dp[i][j] 为边权（无边则为无穷）；
+        2. 枚举中间点 k，更新 dp[i][j] = min(dp[i][j], dp[i][k] + dp[k][j])；
+        3. 遍历所有 k，i，j。
+      complexity: O(V^3)。
+      codeSnippet: |
+        for (int k = 0; k < n; k++) {
+            for (int i = 0; i < n; i++) {
+                for (int j = 0; j < n; j++) {
+                    dp[i][j] = Math.min(dp[i][j], dp[i][k] + dp[k][j]);
+                }
+            }
+        }
     - name: Prim 算法
       coreIdea: 从任意节点开始，每次选择连接已选集合和未选集合的最小边。
       steps: |
@@ -239,6 +348,14 @@
           style B fill:#f9f
           style C fill:#f9f
           style D fill:#f9f
+    - name: Kruskal 算法
+      coreIdea: 将边按权重排序，每次选最小边加入生成树（不形成环）。
+      steps: |
+        1. 将所有边按权重升序排序；
+        2. 使用并查集维护连通性；
+        3. 依次考虑每条边，若连接两个不同连通分量则加入。
+      complexity: O(E log E)。
+      visualizationHint: 展示边的选择顺序和并查集合并。
     - name: 广度优先搜索 (BFS)
       coreIdea: 从起点开始，逐层向外扩展，先访问离起点最近的节点。
       steps: |
@@ -302,6 +419,7 @@
           style TaskC fill:#dfd
           style TaskD fill:#efd
           style TaskE fill:#ffd
+
 - title: 搜索与排序
   category: 基础算法
   overview: 基础的查找和排序算法。
@@ -351,6 +469,50 @@
           RS --> Final
           Final[1, 1, 2, 3, 4, 5, 6, 9]
           style Final fill:#f9f
+    - name: 堆排序
+      coreIdea: 利用堆数据结构进行排序，先建最大堆，然后依次取出堆顶。
+      steps: |
+        1. 建立最大堆（从最后一个非叶子节点开始下沉）；
+        2. 将堆顶（最大值）与末尾元素交换；
+        3. 堆大小减 1，重新调整堆；
+        4. 重复步骤 2-3。
+      complexity: O(n log n)，空间 O(1)。
+      code Snippet: |
+        // 堆调整
+        void heapify(int[] arr, int n, int i) {
+            int largest = i;
+            int left = 2 * i + 1, right = 2 * i + 2;
+            if (left < n && arr[left] > arr[largest]) largest = left;
+            if (right < n && arr[right] > arr[largest]) largest = right;
+            if (largest != i) {
+                swap(arr, i, largest);
+                heapify(arr, n, largest);
+            }
+        }
+    - name: 计数排序
+      coreIdea: 统计每个元素出现次数，然后按顺序输出。
+      steps: |
+        1. 统计每个值的出现次数；
+        2. 计算累计次数（确定位置）；
+        3. 从后向前遍历原数组，放入正确位置。
+      complexity: O(n + k)，k 为值域范围。
+      visualizationHint: 非比较排序，适合值域较小的情况。
+    - name: 桶排序
+      coreIdea: 将元素分配到不同的桶中，桶内排序后合并。
+      steps: |
+        1. 确定桶的数量和范围；
+        2. 将元素分配到对应的桶；
+        3. 桶内排序（插入排序或快排）；
+        4. 按顺序合并所有桶。
+      complexity: 平均 O(n + k)，k 为桶数量。
+    - name: 基数排序
+      coreIdea: 按位数从低到高依次进行稳定排序。
+      steps: |
+        1. 从最低位开始；
+        2. 对当前位进行计数排序（稳定）；
+        3. 继续下一位，直到最高位。
+      complexity: O(d * (n + k))，d 为位数。
+
 - title: 字符串算法
   category: 经典算法
   overview: 处理字符串匹配和操作的算法。
@@ -375,3 +537,281 @@
           Shift --> Retry[新匹配: ... A B A B C]
           Retry --> Success((匹配成功))
           style Success fill:#f9f
+    - name: Rabin-Karp 算法
+      coreIdea: 使用哈希函数快速比较子串，利用滚动哈希提高效率。
+      steps: |
+        1. 计算模式串的哈希值；
+        2. 计算文本串中每个长度为 m 的子串哈希值；
+        3. 若哈希值相等，再逐字符比较确认。
+      complexity: 平均 O(n + m)，最坏 O(nm)。
+    - name: Boyer-Moore 算法
+      coreIdea: 从模式串末尾开始匹配，利用坏字符和好后缀规则跳过更多字符。
+      steps: |
+        1. 预处理模式串，建立坏字符表和好后缀表；
+        2. 从右向左匹配；
+        3. 失配时根据两个表计算跳跃距离。
+      complexity: 平均 O(n/m)，最坏 O(nm)。
+    - name: Trie 树（字典树）
+      coreIdea: 多叉树结构，用于高效存储和查找字符串集合。
+      steps: |
+        1. 每个节点包含若干子节点（通常26个字母）；
+        2. 从根到某节点的路径代表一个前缀；
+        3. 插入、查找都是 O(L)，L 为字符串长度。
+      visualizationHint: 展示树的分叉结构和前缀共享。
+    - name: AC 自动机
+      coreIdea: 在 Trie 树基础上增加失配指针，实现多模式串匹配。
+      steps: |
+        1. 构建所有模式串的 Trie 树；
+        2. 利用 BFS 构建 fail 指针；
+        3. 遍历文本串，根据 fail 指针跳转。
+      complexity: O(n + m + z)，z 为匹配次数。
+
+- title: 回溯算法
+  category: 算法思想
+  overview: 通过递归尝试所有可能的解，遇到不满足条件时回退。
+  keywords:
+    - 回溯
+    - 剪枝
+    - 递归
+  difficultyLevel: 3
+  algorithms:
+    - name: N 皇后问题
+      coreIdea: 在 N×N 棋盘上放置 N 个皇后，使它们互不攻击。
+      steps: |
+        1. 逐行放置皇后；
+        2. 检查当前列、对角线是否有冲突；
+        3. 无冲突则继续下一行，否则回溯。
+      complexity: O(N!)。
+      visualizationHint: 展示棋盘状态和回溯过程。
+    - name:  全排列
+      coreIdea: 生成数组的所有排列。
+      steps: |
+        1. 使用 used 数组标记已选元素；
+        2. 递归选择未使用的元素；
+        3. 到达叶子节点时记录排列。
+      complexity: O(N * N!)。
+      codeSnippet: |
+        void backtrack(List<Integer> path, boolean[] used) {
+            if (path.size() == nums.length) {
+                result.add(new ArrayList<>(path));
+                return;
+            }
+            for (int i = 0; i < nums.length; i++) {
+                if (used[i]) continue;
+                used[i] = true;
+                path.add(nums[i]);
+                backtrack(path, used);
+                path.remove(path.size() - 1);
+                used[i] = false;
+            }
+        }
+    - name: 子集生成
+      coreIdea: 生成集合的所有子集（幂集）。
+      steps: |
+        1. 对每个元素，选择包含或不包含；
+        2. 递归遍历所有可能；
+        3. 每个叶子节点对应一个子集。
+      complexity: O(2^N)。
+    - name: 组合总和
+      coreIdea: 找出所有和为目标值的数字组合。
+      steps: |
+        1. 从当前位置开始选择数字；
+        2. 递归搜索剩余target - current；
+        3. 剪枝：若已超target则回退。
+      complexity: 指数级，具体取决于目标值和候选数。
+    - name: 数独求解器
+      coreIdea: 填充数独使每行、每列、每个 3×3 宫格数字不重复。
+      steps: |
+        1. 找到空格；
+        2. 尝试填入 1-9；
+        3. 检查是否合法，递归填下一个格子；
+        4. 若无解则回溯。
+      complexity: 最坏 O(9^m)，m 为空格数。
+
+- title: 数据结构算法
+  category: 经典算法
+  overview: 高效数据结构的实现和应用。
+  keywords:
+    - 并查集
+    - 堆
+    - 树
+  difficultyLevel: 2
+  algorithms:
+    - name: 并查集
+      coreIdea: 维护元素的分组信息，支持快速合并和查询。
+      steps: |
+        1. Find: 查找元素所属集合的代表元（路径压缩）；
+        2. Union: 合并两个集合（按秩合并）。
+      complexity: 几乎 O(1)（摊销）。
+      codeSnippet: |
+        int find(int x) {
+            if (parent[x] != x) parent[x] = find(parent[x]);
+            return parent[x];
+        }
+        void union(int x, int y) {
+            int px = find(x), py = find(y);
+            if (rank[px] < rank[py]) parent[px] = py;
+            else if (rank[px] > rank[py]) parent[py] = px;
+            else { parent[py] = px; rank[px]++; }
+        }
+    - name: 线段树
+      coreIdea: 树状结构维护区间信息，支持区间查询和修改。
+      steps: |
+        1. 建树：递归构建，每个节点存区间统计值；
+        2. 查询：递归查询子区间并合并；
+        3. 更新：递归更新并回溯更新父节点。
+      complexity: 建树 O(n)，查询/更新 O(log n)。
+    - name: 树状数组 (Fenwick Tree)
+      coreIdea: 用数组模拟树结构，维护前缀和。
+      steps: |
+        1. Update: 更新 index 及其父节点；
+        2. Query: 查询前缀和，累加至 index 祖先节点。
+      complexity: O(log n)。
+      codeSnippet: |
+        // 单点更新
+        void update(int i, int delta) {
+            while (i <= n) {
+                tree[i] += delta;
+                i += i & (-i);
+            }
+        }
+        // 查询前缀和
+        int query(int i) {
+            int sum = 0;
+            while (i > 0) {
+                sum += tree[i];
+                i -= i & (-i);
+            }
+            return sum;
+        }
+    - name: 最小堆/最大堆
+      coreIdea: 完全二叉树，父节点小于（或大于）子节点。
+      steps: |
+        1. 插入：添加到末尾，上浮调整；
+        2. 删除：取出堆顶，末尾元素放到顶部，下沉调整。
+      complexity: 插入/删除 O(log n)，取最小值 O(1)。
+    - name: 单调栈
+      coreIdea: 维护一个单调递增或递减的栈，快速找到左/右第一个更大/小的元素。
+      steps: |
+        1. 遍历数组；
+        2. 弹出栈顶不满足单调性的元素；
+        3. 当前元素入栈。
+      complexity: O(n)。
+      visualizationHint: 展示栈的弹入弹出过程。
+
+- title: 数论算法
+  category: 经典算法
+  overview: 数学和数论相关的经典算法。
+  keywords:
+    - 素数
+    - GCD
+    - 模运算
+  difficultyLevel: 2
+  algorithms:
+    - name: 欧几里得算法 (GCD)
+      coreIdea: 求两个数的最大公约数。
+      steps: |
+        1. gcd(a, b) = gcd(b, a mod b)；
+        2. 递归直到 b = 0，此时 a 即为 GCD。
+      complexity: O(log min(a, b))。
+      codeSnippet: |
+        int gcd(int a, int b) {
+            return b == 0 ? a : gcd(b, a % b);
+        }
+    - name: 扩展欧几里得算法
+      coreIdea: 求解 ax + by = gcd(a, b) 的整数解。
+      steps: |
+        1. 递归求 gcd；
+        2. 回溯时计算系数 x, y。
+      complexity: O(log min(a, b))。
+    - name: 快速幂（模运算）
+      coreIdea: 计算 a^n mod m。
+      steps: |
+        1. 若 n 为偶数，a^n = (a^(n/2))^2；
+        2. 若 n 为奇数，a^n = a * (a^(n/2))^2；
+        3. 每步取模防止溢出。
+      complexity: O(log n)。
+      codeSnippet: |
+        long modPow(long a, long n, long mod) {
+            long res = 1;
+            while (n > 0) {
+                if ((n & 1) == 1) res = res * a % mod;
+                a = a * a % mod;
+                n >>= 1;
+            }
+            return res;
+        }
+    - name: 埃氏筛法（素数筛选）
+      coreIdea: 筛选出一定范围内的所有素数。
+      steps: |
+        1. 初始化所有数为素数；
+        2. 从 2 开始，将其倍数标记为合数；
+        3. 重复直到 sqrt(n)。
+      complexity: O(n log log n)。
+    - name: 线性筛（欧拉筛）
+      coreIdea: 更高效的素数筛选，每个合数只被其最小质因子筛掉一次。
+      steps: |
+        1. 维护已找到的质数列表；
+        2. 对每个数 i，用已知质数筛掉 i * primes[j]；
+        3. 若 i % primes[j] == 0 则停止。
+      complexity: O(n)。
+    - name: 中国剩余定理
+      coreIdea: 求解一组同余方程组。
+      steps: |
+        1. 确保模数两两互质；
+        2. 构造特解并求和；
+        3. 对乘积取模得最终解。
+     complexity: O(k log M)，k 为方程数。
+
+- title: 位运算技巧
+  category: 技巧
+  overview: 利用位运算解决问题的技巧。
+  keywords:
+    - 位运算
+    - 异或
+    - 位掩码
+  difficultyLevel: 2
+  algorithms:
+    - name: 找出唯一数（异或）
+      coreIdea: 数组中只有一个数出现一次，其他都出现两次，找出这个数。
+      steps: |
+        1. 所有数异或，相同的数异或为 0；
+        2. 最终结果即为唯一数。
+      complexity: O(n)。
+      codeSnippet: |
+        int result = 0;
+        for (int num : nums) result ^= num;
+        return result;
+    - name: 计算二进制中 1 的个数
+      coreIdea: 统计一个数的二进制表示中有多少个 1。
+      steps: |
+        1. n & (n-1) 可以消除最低位的 1；
+        2. 重复直到 n 变为 0。
+      complexity: O(k)，k 为 1 的个数。
+      codeSnippet: |
+        int count = 0;
+        while (n != 0) {
+            n &= (n - 1);
+            count++;
+        }
+        return count;
+    - name: 判断是否为 2 的幂
+      coreIdea: 2 的幂的二进制只有一个 1。
+      steps: |
+        1. n & (n-1) == 0 且 n > 0。
+      complexity: O(1)。
+    - name: 位掩码 DP
+      coreIdea: 用整数的二进制位表示状态，进行动态规划。
+      steps: |
+        1. 每一位代表某个元素是否被选中；
+        2. 状态转移通过位运算实现；
+        3. 适用于集合问题（如旅行商问题）。
+      complexity: O(2^n * poly(n))。
+    - name: 交换两数（无临时变量）
+      coreIdea: 利用异或交换两个数。
+      steps: |
+        1. a ^= b;
+        2. b ^= a;
+        3. a ^= b;
+      complexity: O(1)。
+  
