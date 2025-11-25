@@ -56,32 +56,38 @@ export const streamAsk = async (payload, onChunk, onReference, onDone, onError) 
 
       for (const line of lines) {
         if (line.startsWith('data:')) {
-          // 只去除开头的 'data:' 和紧随其后的一个空格（如果有）
-          // 不要使用 trim()，否则会丢弃纯换行符或空格
           let data = line.slice(5)
           if (data.startsWith(' ')) {
             data = data.slice(1)
           }
 
-          // 如果是空字符串（比如 keep-alive），跳过
           if (data.length === 0) continue
 
           try {
-            // 尝试解析 JSON (针对 reference 事件)
-            if (data.startsWith('[') || data.startsWith('{')) {
+            // 尝试解析 JSON
+            if (data.startsWith('{') || data.startsWith('[')) {
               const parsed = JSON.parse(data)
-              // 简单的判断是否是引用数组
+
+              // 情况1: 包装的内容对象 {"content": "..."}
+              if (parsed.content) {
+                onChunk(parsed.content)
+                continue
+              }
+
+              // 情况2: 引用数组
               if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].topicTitle) {
                 onReference(parsed)
                 continue
               }
             }
           } catch (e) {
-            // 忽略解析错误，视为普通文本
+            // 忽略解析错误
           }
 
-          // 默认视为文本块
-          onChunk(data)
+          // 降级处理：如果不是 JSON 或解析失败，视为普通文本（兼容旧格式）
+          if (!data.startsWith('{') && !data.startsWith('[')) {
+            onChunk(data)
+          }
         }
       }
     }
@@ -92,7 +98,16 @@ export const streamAsk = async (payload, onChunk, onReference, onDone, onError) 
       if (data.startsWith(' ')) {
         data = data.slice(1)
       }
-      if (data) onChunk(data)
+      try {
+        if (data.startsWith('{')) {
+          const parsed = JSON.parse(data)
+          if (parsed.content) onChunk(parsed.content)
+        } else {
+          if (data) onChunk(data)
+        }
+      } catch (e) {
+        if (data) onChunk(data)
+      }
     }
 
     onDone()

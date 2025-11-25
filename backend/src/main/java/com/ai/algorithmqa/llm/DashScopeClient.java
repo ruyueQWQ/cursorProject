@@ -62,7 +62,7 @@ public class DashScopeClient {
         }
     }
 
-    public void streamChat(String prompt, org.springframework.web.servlet.mvc.method.annotation.SseEmitter emitter) {
+    public String streamChat(String prompt, org.springframework.web.servlet.mvc.method.annotation.SseEmitter emitter) {
         if (properties.apiKey() == null || properties.apiKey().isBlank()) {
             try {
                 String mock = """
@@ -72,12 +72,14 @@ public class DashScopeClient {
                         """ + prompt;
                 emitter.send(mock);
                 emitter.complete();
+                return mock;
             } catch (Exception e) {
                 emitter.completeWithError(e);
+                return "";
             }
-            return;
         }
 
+        StringBuilder fullContent = new StringBuilder();
         try {
             Map<String, Object> body = Map.of(
                     "model", properties.model(),
@@ -114,7 +116,9 @@ public class DashScopeClient {
                         JsonNode node = objectMapper.readTree(data);
                         String content = node.path("output").path("text").asText();
                         if (content != null && !content.isEmpty()) {
-                            emitter.send(content);
+                            // 使用 JSON 包装 content 以保留换行符等格式
+                            emitter.send(Map.of("content", content));
+                            fullContent.append(content);
                         }
 
                         if (node.path("output").path("finish_reason").asText().equals("stop")) {
@@ -128,5 +132,6 @@ public class DashScopeClient {
             log.error("DashScope 流式调用失败", e);
             emitter.completeWithError(e);
         }
+        return fullContent.toString();
     }
 }
