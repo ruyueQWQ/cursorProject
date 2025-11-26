@@ -38,7 +38,7 @@ export const useChatStore = defineStore('chat', {
         const { data } = await askQuestion({
           question,
           contextFilters: filters,
-          topK: 4
+          topK: 20
         })
         const payload = data.data
         this.references = payload.references ?? []
@@ -90,7 +90,7 @@ export const useChatStore = defineStore('chat', {
           {
             question,
             contextFilters: filters,
-            topK: 4
+            topK: 10
           },
           (chunk) => {
             // onChunk: 追加文本
