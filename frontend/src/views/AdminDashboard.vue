@@ -9,41 +9,129 @@
     </header>
 
     <div class="dashboard-content">
-      <div class="toolbar">
-        <button @click="openCreateDialog" class="btn-primary">
-          + 新增算法
+      <!-- Tab Navigation -->
+      <div class="tabs">
+        <button 
+          :class="['tab-btn', { active: currentTab === 'algorithms' }]"
+          @click="currentTab = 'algorithms'"
+        >
+          算法管理
+        </button>
+        <button 
+          :class="['tab-btn', { active: currentTab === 'stats' }]"
+          @click="switchToStats"
+        >
+          统计分析
         </button>
       </div>
 
-      <table class="algorithms-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>名称</th>
-            <th>主题</th>
-            <th>时间复杂度</th>
-            <th>动画</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="algo in algorithms" :key="algo.id">
-            <td>{{ algo.id }}</td>
-            <td>{{ algo.name }}</td>
-            <td>{{ getTopicName(algo.topicId) }}</td>
-            <td>{{ algo.timeComplexity }}</td>
-            <td>
-              <span v-if="algo.animationUrl" class="badge-success">已上传</span>
-              <span v-else class="badge-warning">未上传</span>
-            </td>
-            <td>
-              <button @click="handleUploadAnimation(algo)" class="btn-sm">上传动画</button>
-              <button @click="openEditDialog(algo)" class="btn-sm">编辑</button>
-              <button @click="handleDelete(algo.id)" class="btn-sm btn-danger">删除</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <!-- Algorithm Management Tab -->
+      <div v-if="currentTab === 'algorithms'">
+        <div class="toolbar">
+          <button @click="openCreateDialog" class="btn-primary">
+            + 新增算法
+          </button>
+        </div>
+
+        <table class="algorithms-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>名称</th>
+              <th>主题</th>
+              <th>时间复杂度</th>
+              <th>动画</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="algo in algorithms" :key="algo.id">
+              <td>{{ algo.id }}</td>
+              <td>{{ algo.name }}</td>
+              <td>{{ getTopicName(algo.topicId) }}</td>
+              <td>{{ algo.timeComplexity }}</td>
+              <td>
+                <span v-if="algo.animationUrl" class="badge-success">已上传</span>
+                <span v-else class="badge-warning">未上传</span>
+              </td>
+              <td>
+                <button @click="handleUploadAnimation(algo)" class="btn-sm">上传动画</button>
+                <button @click="openEditDialog(algo)" class="btn-sm">编辑</button>
+                <button @click="handleDelete(algo.id)" class="btn-sm btn-danger">删除</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Statistics Tab -->
+      <div v-if="currentTab === 'stats'" class="stats-view">
+        <!-- Search Rankings Section -->
+        <div class="stats-section">
+          <h2 class="section-title">🔥 热门搜索排行</h2>
+          
+          <!-- Bar Chart -->
+          <div class="stats-card">
+            <div ref="searchChart" class="chart-container"></div>
+          </div>
+
+          <!-- Table -->
+          <div class="stats-card">
+            <table class="stats-table">
+              <thead>
+                <tr>
+                  <th>排名</th>
+                  <th>问题</th>
+                  <th>搜索次数</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(item, index) in stats.topQuestions" :key="index">
+                  <td>{{ index + 1 }}</td>
+                  <td>{{ item.question }}</td>
+                  <td>{{ item.count }}</td>
+                </tr>
+                <tr v-if="stats.topQuestions.length === 0">
+                  <td colspan="3" style="text-align: center; color: #9ca3af;">暂无数据</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Click Rankings Section -->
+        <div class="stats-section">
+          <h2 class="section-title">👆 热门算法点击</h2>
+          
+          <!-- Pie Chart -->
+          <div class="stats-card">
+            <div ref="clickChart" class="chart-container"></div>
+          </div>
+
+          <!-- Table -->
+          <div class="stats-card">
+            <table class="stats-table">
+              <thead>
+                <tr>
+                  <th>排名</th>
+                  <th>算法/主题</th>
+                  <th>点击次数</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(item, index) in stats.topClicks" :key="index">
+                  <td>{{ index + 1 }}</td>
+                  <td>{{ item.title }}</td>
+                  <td>{{ item.count }}</td>
+                </tr>
+                <tr v-if="stats.topClicks.length === 0">
+                  <td colspan="3" style="text-align: center; color: #9ca3af;">暂无数据</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- 新增/编辑算法对话框 -->
@@ -130,8 +218,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
+import * as echarts from 'echarts'
 import { 
   fetchAllAlgorithms, 
   createAlgorithm,
@@ -140,6 +229,7 @@ import {
   uploadAnimation,
   fetchTopics 
 } from '../api/admin'
+import { fetchDashboardStats } from '../api/stats'
 
 const router = useRouter()
 const username = ref(localStorage.getItem('admin_username') || '')
@@ -152,6 +242,12 @@ const selectedFile = ref(null)
 const uploading = ref(false)
 const editMode = ref(false)
 const submitting = ref(false)
+const currentTab = ref('algorithms')
+const stats = ref({ topQuestions: [], topClicks: [] })
+const searchChart = ref(null)
+const clickChart = ref(null)
+let searchChartInstance = null
+let clickChartInstance = null
 
 const formData = ref({
   topicId: '',
@@ -197,6 +293,154 @@ const getTopicName = (topicId) => {
   const topic = topics.value.find(t => t.id === topicId)
   return topic ? topic.title : topicId
 }
+
+const switchToStats = async () => {
+  currentTab.value = 'stats'
+  try {
+    const { data } = await fetchDashboardStats()
+    if (data.success) {
+      stats.value = data.data
+      // Wait for DOM update
+      await nextTick()
+      initCharts()
+    }
+  } catch (error) {
+    console.error('加载统计数据失败', error)
+    alert('加载统计数据失败')
+  }
+}
+
+const initCharts = () => {
+  initSearchChart()
+  initClickChart()
+}
+
+const initSearchChart = () => {
+  if (!searchChart.value) return
+  
+  // Dispose existing instance
+  if (searchChartInstance) {
+    searchChartInstance.dispose()
+  }
+  
+  searchChartInstance = echarts.init(searchChart.value)
+  
+  const option = {
+    title: {
+      text: '搜索关键词排行',
+      left: 'center',
+      textStyle: {
+        fontSize: 16,
+        fontWeight: 'normal'
+      }
+    },
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: {
+        type: 'shadow'
+      }
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'value',
+      name: '搜索次数'
+    },
+    yAxis: {
+      type: 'category',
+      data: stats.value.topQuestions.slice(0, 10).map(item => {
+        const q = item.question
+        return q.length > 20 ? q.substring(0, 20) + '...' : q
+      }).reverse(),
+      axisLabel: {
+        interval: 0,
+        fontSize: 12
+      }
+    },
+    series: [{
+      name: '搜索次数',
+      type: 'bar',
+      data: stats.value.topQuestions.slice(0, 10).map(item => item.count).reverse(),
+      itemStyle: {
+        color: '#667eea'
+      },
+      label: {
+        show: true,
+        position: 'right'
+      }
+    }]
+  }
+  
+  searchChartInstance.setOption(option)
+}
+
+const initClickChart = () => {
+  if (!clickChart.value) return
+  
+  // Dispose existing instance
+  if (clickChartInstance) {
+    clickChartInstance.dispose()
+  }
+  
+  clickChartInstance = echarts.init(clickChart.value)
+  
+  const option = {
+    title: {
+      text: '算法点击分布',
+      left: 'center',
+      textStyle: {
+        fontSize: 16,
+        fontWeight: 'normal'
+      }
+    },
+    tooltip: {
+      trigger: 'item',
+      formatter: '{b}: {c} ({d}%)'
+    },
+    legend: {
+      orient: 'vertical',
+      left: 'left',
+      top: 'middle',
+      textStyle: {
+        fontSize: 12
+      }
+    },
+    series: [{
+      name: '点击次数',
+      type: 'pie',
+      radius: ['40%', '70%'],
+      avoidLabelOverlap: false,
+      itemStyle: {
+        borderRadius: 10,
+        borderColor: '#fff',
+        borderWidth: 2
+      },
+      label: {
+        show: true,
+        formatter: '{b}: {d}%'
+      },
+      emphasis: {
+        label: {
+          show: true,
+          fontSize: 14,
+          fontWeight: 'bold'
+        }
+      },
+      data: stats.value.topClicks.slice(0, 10).map(item => ({
+        name: item.title,
+        value: item.count
+      }))
+    }]
+  }
+  
+  clickChartInstance.setOption(option)
+}
+
+
 
 const resetForm = () => {
   formData.value = {
@@ -368,6 +612,104 @@ const handleDelete = async (id) => {
 .toolbar {
   margin-bottom: 1.5rem;
 }
+
+/* Tab Navigation */
+.tabs {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.tab-btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  background: none;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.2s;
+}
+
+.tab-btn.active {
+  color: #667eea;
+  border-bottom-color: #667eea;
+}
+
+.tab-btn:hover:not(.active) {
+  color: #374151;
+}
+
+/* Statistics View */
+.stats-view {
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+}
+
+.stats-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.section-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1f2a44;
+}
+
+.stats-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.chart-container {
+  width: 100%;
+  height: 400px;
+  min-height: 400px;
+}
+
+.stats-card h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: #1f2a44;
+  font-size: 1.1rem;
+}
+
+.stats-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.stats-table th,
+.stats-table td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.stats-table th {
+  background: #f9fafb;
+  font-weight: 600;
+  color: #4b5563;
+  font-size: 0.875rem;
+}
+
+.stats-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+.stats-table tr:last-child td {
+  border-bottom: none;
+}
+
 
 .btn-primary {
   background: #667eea;

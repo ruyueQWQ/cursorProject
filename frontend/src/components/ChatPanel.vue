@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useChatStore } from '../stores/chatStore'
 import { fetchFilters } from '../api/chat'
+import { logClick } from '../api/stats'
 import MessageBubble from './MessageBubble.vue'
 import KnowledgeReference from './KnowledgeReference.vue'
 import VisualizationPanel from './VisualizationPanel.vue'
@@ -60,12 +61,16 @@ const toggleFilter = (value) => {
 
 const handleSubmit = () => {
   if (!canSend.value) return
-  if (!canSend.value) return
   chatStore.streamAskQuestion(question.value, selectedFilters.value)
   question.value = ''
 }
 
 const handleReferenceSelect = (reference) => {
+  // 记录点击统计
+  logClick(reference.topicId, reference.topicTitle).catch(err => {
+    console.warn('记录点击失败:', err)
+  })
+  // 加载可视化
   chatStore.loadVisualization(reference.topicId)
 }
 </script>

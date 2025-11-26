@@ -55,4 +55,13 @@ CREATE TABLE IF NOT EXISTS admin_user (
 
 -- 插入默认管理员账号 (密码: admin123)
 INSERT INTO admin_user (username, password) VALUES ('admin', 'admin123') ON DUPLICATE KEY UPDATE username=username;
+-- 创建点击记录表，用于记录用户的搜索点击记录
+CREATE TABLE IF NOT EXISTS search_click_log (
+                                                id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                                                topic_id BIGINT NOT NULL,
+                                                topic_title VARCHAR(255) NOT NULL,
+                                                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                                INDEX idx_topic_title (topic_title),
+                                                INDEX idx_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='算法点击统计日志';
 
