@@ -94,22 +94,50 @@ const processedContent = computed(() => {
 </script>
 
 <template>
-  <div class="bubble" :class="message.role">
-    <div class="bubble-meta">
-      <span>{{ message.role === 'user' ? '学生' : '助教' }}</span>
-      <small>{{ message.timestamp }}</small>
+  <Transition name="bubble-pop" appear>
+    <div class="bubble" :class="message.role">
+      <div class="bubble-meta">
+        <span>{{ message.role === 'user' ? '学生' : '助教' }}</span>
+        <small>{{ message.timestamp }}</small>
+      </div>
+      <div class="markdown-body" v-html="processedContent" />
     </div>
-    <div class="markdown-body" v-html="processedContent" />
-  </div>
+  </Transition>
 </template>
 
 <style scoped>
+/* Bubble Pop Animation */
+.bubble-pop-enter-active {
+  animation: bubble-pop 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes bubble-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) translateY(20px);
+  }
+  60% {
+    transform: scale(1.05) translateY(-5px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
 .bubble {
   padding: 1rem 1.25rem;
   border-radius: 1rem;
   max-width: 90%;
   background: #f2f5ff;
   align-self: flex-start;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.bubble:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
 }
 .bubble.user {
   background: #e0f2fe;
