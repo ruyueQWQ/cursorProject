@@ -65,6 +65,9 @@ const getParticleStyle = (i) => {
         <main class="app-main">
           <ChatPanel />
         </main>
+        <footer class="app-footer">
+          <a href="https://beian.miit.gov.cn/" target="_blank">京ICP备2025152510号-1</a>
+        </footer>
       </div>
     </Transition>
   </template>
@@ -276,6 +279,23 @@ const getParticleStyle = (i) => {
 .app-main {
   flex: 1;
   padding: 0 3rem 2rem;
+}
+
+.app-footer {
+  text-align: center;
+  padding: 1rem;
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+.app-footer a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.app-footer a:hover {
+  color: #667eea;
 }
 
 @media (max-width: 768px) {
